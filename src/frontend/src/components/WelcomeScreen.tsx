@@ -1,5 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { InputForm } from "@/components/InputForm";
+import { GlassCard } from "@/components/ui/glass-card";
+import DualVerticalGalleries from "@/components/animations/DualVerticalGalleries";
+import FadeContent from "@/components/animations/FadeContent";
 
 interface WelcomeScreenProps {
   handleSubmit: (query: string) => void;
@@ -13,29 +16,35 @@ export function WelcomeScreen({
   onCancel,
 }: WelcomeScreenProps) {
   return (
-    // This container fills the space provided by its parent layout (e.g., the left panel in a split view)
-    // and centers its content (the card) within itself.
-    <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">
-      
-      {/* The "Card" Container */}
-      {/* This div now holds the card's styling: background, blur, padding, border, shadow, and hover effect */}
-      <div className="w-full max-w-2xl z-10
-                      bg-neutral-900/50 backdrop-blur-md 
-                      p-8 rounded-2xl border border-neutral-700 
-                      shadow-2xl shadow-black/60 
-                      transition-all duration-300 hover:border-neutral-600">
-        
-        {/* Header section of the card */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-white flex items-center justify-center gap-3">
-            GTMForge
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden relative">
+
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <DualVerticalGalleries />
+      </div>
+
+      <FadeContent delay={200} duration={800}>
+        <GlassCard 
+        variant="liquid" 
+        className="w-full max-w-2xl z-20 p-8 animate-float-slow shadow-2xl relative"
+        style={{
+          boxShadow: '0 20px 60px rgba(147, 51, 234, 0.2), 0 0 60px rgba(236, 72, 153, 0.15), 0 0 100px rgba(59, 130, 246, 0.1)',
+        }}
+      >
+        <div className="flex flex-col justify-center items-center h-full text-center space-y-6">
+          <h1 className="text-5xl font-bold items-center justify-center gap-3 relative">
+            <span 
+              className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient-flow"
+              style={{
+                backgroundSize: '200% 200%',
+              }}
+            >
+              GTMForge
+            </span>
           </h1>
-          <p className="text-lg text-neutral-300 max-w-md mx-auto">
+          <p className="text-lg text-gray-700 max-w-md mx-auto font-medium">
             Your startup accelerator and GTM mentor. What's your GTM idea? Let's forge something amazing!
           </p>
         </div>
-
-        {/* Input form section of the card */}
         <div className="mt-8">
           <InputForm onSubmit={handleSubmit} isLoading={isLoading} context="homepage" />
           {isLoading && (
@@ -43,14 +52,15 @@ export function WelcomeScreen({
               <Button
                 variant="outline"
                 onClick={onCancel}
-                className="text-red-400 hover:text-red-300 hover:bg-red-900/20 border-red-700/50" // Enhanced cancel button
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
               >
                 Cancel
               </Button>
             </div>
           )}
         </div>
-      </div>
+      </GlassCard>
+      </FadeContent>
     </div>
   );
 }

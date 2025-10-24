@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { ChatMessagesView } from "@/components/ChatMessagesView";
+import PageTransition from "@/components/animations/PageTransition";
 
 // Update DisplayData to be a string type
 type DisplayData = string | null;
@@ -462,37 +463,36 @@ export default function App() {
 
   const BackendLoadingScreen = () => (
     <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">
-      <div className="w-full max-w-2xl z-10
-                      bg-neutral-900/50 backdrop-blur-md 
-                      p-8 rounded-2xl border border-neutral-700 
-                      shadow-2xl shadow-black/60">
+      <div className="w-full max-w-2xl z-10 bg-white/15 backdrop-blur-lg p-8 rounded-2xl border border-white/30 shadow-2xl animate-glow-pulse">
         
         <div className="text-center space-y-6">
-          <h1 className="text-4xl font-bold text-white flex items-center justify-center gap-3">
-            GTMForge
+          <h1 className="text-4xl font-bold flex items-center justify-center gap-3">
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient-flow" style={{backgroundSize: '200% 200%'}}>
+              GTMForge
+            </span>
+            <span className="text-4xl">🚀💡</span>
           </h1>
           
           <div className="flex flex-col items-center space-y-4">
-            {/* Spinning animation */}
+            {/* Rainbow gradient spinning animation */}
             <div className="relative">
-              <div className="w-16 h-16 border-4 border-neutral-600 border-t-purple-500 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-purple-400 rounded-full animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+              <div className="w-16 h-16 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-b-blue-500 border-l-orange-400 rounded-full animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
             </div>
             
             <div className="space-y-2">
-              <p className="text-xl text-neutral-300">
+              <p className="text-xl text-gray-700 font-semibold">
                 Initializing strategic systems...
               </p>
-              <p className="text-sm text-neutral-400">
+              <p className="text-sm text-gray-600">
                 This may take a moment on first startup
               </p>
             </div>
-            
-            {/* Animated dots */}
+          
             <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
-              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce shadow-lg" style={{animationDelay: '0ms'}}></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce shadow-lg" style={{animationDelay: '150ms'}}></div>
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce shadow-lg" style={{animationDelay: '300ms'}}></div>
             </div>
           </div>
         </div>
@@ -501,44 +501,50 @@ export default function App() {
   );
 
   return (
-    <div className="flex h-screen bg-background text-foreground font-sans antialiased dark">
-      <main className="flex-1 flex flex-col overflow-hidden w-full">
+    <div className="flex h-screen bg-background text-foreground font-sans antialiased dark relative overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden w-full relative z-10">
         <div className={`flex-1 overflow-y-auto ${(messages.length === 0 || isCheckingBackend) ? "flex" : ""}`}>
           {isCheckingBackend ? (
             <BackendLoadingScreen />
           ) : !isBackendReady ? (
             <div className="flex-1 flex flex-col items-center justify-center p-4">
-              <div className="text-center space-y-4">
-                <h2 className="text-2xl font-bold text-red-400">Oops! Hit a cosmic hiccup 🌙</h2>
-                <p className="text-neutral-300">
-                  Can't reach the cosmos right now. Let's try again?
+              <div className="w-full max-w-md bg-white/15 backdrop-blur-lg p-8 rounded-2xl border border-white/30 shadow-2xl text-center space-y-4">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Hit a creative roadblock. Let's pivot this idea and try again 🔄
+                </h2>
+                <p className="text-gray-600">
+                  Can't reach the backend right now. Let's try again?
                 </p>
                 <button 
                   onClick={() => window.location.reload()} 
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   Retry
                 </button>
               </div>
             </div>
           ) : messages.length === 0 ? (
-            <WelcomeScreen
-              handleSubmit={handleSubmit}
-              isLoading={isLoading}
-              onCancel={handleCancel}
-            />
+            <PageTransition isActive={messages.length === 0}>
+              <WelcomeScreen
+                handleSubmit={handleSubmit}
+                isLoading={isLoading}
+                onCancel={handleCancel}
+              />
+            </PageTransition>
           ) : (
-            <ChatMessagesView
-              messages={messages}
-              isLoading={isLoading}
-              scrollAreaRef={scrollAreaRef}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-              displayData={displayData}
-              messageEvents={messageEvents}
-              websiteCount={websiteCount}
-              agentName={agentName}
-            />
+            <PageTransition isActive={messages.length > 0}>
+              <ChatMessagesView
+                messages={messages}
+                isLoading={isLoading}
+                scrollAreaRef={scrollAreaRef}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+                displayData={displayData}
+                messageEvents={messageEvents}
+                websiteCount={websiteCount}
+                agentName={agentName}
+              />
+            </PageTransition>
           )}
         </div>
       </main>

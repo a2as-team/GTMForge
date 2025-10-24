@@ -41,6 +41,125 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Custom Glassmorphism Animations */
+@keyframes splash-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(147, 51, 234, 0.4);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-splash-ripple {
+  animation: splash-ripple 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 30s linear infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 10s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+}
+
+.animate-gradient-flow {
+  animation: gradient-flow 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+.animate-shimmer-slow {
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -77,29 +196,41 @@
 }
 
 .dark {
-  /* GTMForge Professional Theme - Business Foundation */
-  --background: oklch(0.11 0.03 240);        /* Deep navy - #0f172a */
-  --foreground: oklch(0.98 0.01 240);        /* Clean white - #f8fafc */
-  --card: oklch(0.18 0.04 240);              /* Slate - #1e293b */
-  --card-foreground: oklch(0.98 0.01 240);   /* Clean white on cards */
-  --popover: oklch(0.15 0.04 240);
-  --popover-foreground: oklch(0.98 0.01 240);
-  --primary: oklch(0.57 0.21 252);           /* Primary blue - #3b82f6 */
-  --primary-foreground: oklch(0.98 0.01 240);/* Clean white on primary */
-  --secondary: oklch(0.20 0.04 240);         /* Lighter slate - #334155 */
-  --secondary-foreground: oklch(0.92 0.02 240);
-  --muted: oklch(0.20 0.04 240);
-  --muted-foreground: oklch(0.65 0.02 240);  /* Muted text - #94a3b8 */
-  --accent: oklch(0.67 0.18 252);            /* Primary light - #60a5fa */
-  --accent-foreground: oklch(0.98 0.01 240);
-  --destructive: oklch(0.704 0.191 22.216);  /* Keep existing red */
-  --border: oklch(0.25 0.04 240 / 40%);      /* Subtle slate border */
-  --input: oklch(0.20 0.04 240 / 60%);       /* Slate input bg */
-  --ring: oklch(0.57 0.21 252);              /* Blue focus ring */
+  /* GTMForge Glassmorphism Theme - Rainbow Gradient */
+  --background: oklch(0.98 0.005 270);       /* Very light white with subtle tint */
+  --foreground: oklch(0.25 0.01 270);        /* Dark text for contrast */
+  --card: rgba(255, 255, 255, 0.15);         /* Glass effect - semi-transparent white */
+  --card-foreground: oklch(0.25 0.01 270);   /* Dark text on glass */
+  --popover: rgba(255, 255, 255, 0.2);
+  --popover-foreground: oklch(0.25 0.01 270);
+  --primary: oklch(0.60 0.20 280);           /* Purple for rainbow gradient base */
+  --primary-foreground: oklch(0.98 0.01 270);/* White on primary */
+  --secondary: rgba(255, 255, 255, 0.25);    /* Glass secondary */
+  --secondary-foreground: oklch(0.30 0.01 270);
+  --muted: rgba(255, 255, 255, 0.1);
+  --muted-foreground: oklch(0.50 0.01 270);  /* Muted dark text */
+  --accent: oklch(0.70 0.18 320);            /* Pink/magenta accent */
+  --accent-foreground: oklch(0.98 0.01 270);
+  --destructive: oklch(0.60 0.20 10);        /* Red with glassmorphism tint */
+  --border: rgba(255, 255, 255, 0.3);        /* Glass border */
+  --input: rgba(255, 255, 255, 0.2);         /* Glass input bg */
+  --ring: oklch(0.60 0.20 280);              /* Purple focus ring */
   
-  /* Business Accents */
-  --success-green: oklch(0.65 0.15 160);     /* #10b981 - Success states */
-  --warning-orange: oklch(0.71 0.15 65);     /* #f59e0b - Attention/alerts */
+  /* Rainbow Gradient Colors */
+  --gradient-start: oklch(0.65 0.25 250);    /* Blue */
+  --gradient-mid-1: oklch(0.60 0.20 280);    /* Purple */
+  --gradient-mid-2: oklch(0.70 0.18 320);    /* Pink */
+  --gradient-end: oklch(0.75 0.20 30);       /* Orange */
+  
+  /* Glass Effects */
+  --glass-blur: 20px;
+  --glass-opacity: 0.15;
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: rgba(100, 100, 255, 0.1);
+  
+  /* Success & Warning with glass tint */
+  --success-green: oklch(0.65 0.15 150);     /* Green */
+  --warning-orange: oklch(0.71 0.15 60);     /* Orange */
   
   /* Charts - keep existing theme */
   --chart-1: oklch(0.488 0.243 264.376);
@@ -159,5 +290,35 @@
   animation: fadeInUpSmooth 0.3s ease-out forwards;
 }
 
-/* Ensure your body or html has a dark background if not already set, e.g.: */
-/* body { background-color: #0c0c0d; } */ /* This is similar to neutral-950 */
+/* Glassmorphism Background Gradient */
+body {
+  background: linear-gradient(135deg, 
+    oklch(0.98 0.005 270) 0%,
+    oklch(0.96 0.01 280) 25%,
+    oklch(0.97 0.008 260) 50%,
+    oklch(0.98 0.005 290) 75%,
+    oklch(0.97 0.01 270) 100%
+  );
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Glass blur effects support */
+@supports (backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px)) {
+  .backdrop-blur-md {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .backdrop-blur-lg {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
+  .backdrop-blur-md,
+  .backdrop-blur-lg {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+  }
+}

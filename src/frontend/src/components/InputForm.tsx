@@ -40,8 +40,11 @@ export function InputForm({ onSubmit, isLoading, context = 'homepage' }: InputFo
       : "What's your GTM idea?";
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end space-x-2">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col justify-center items-center h-full gap-2"
+    >
+      <div className="flex items-stretch gap-2 w-full">
         <Textarea
           ref={textareaRef}
           value={inputValue}
@@ -49,12 +52,22 @@ export function InputForm({ onSubmit, isLoading, context = 'homepage' }: InputFo
           onKeyDown={handleKeyDown}
           placeholder={placeholderText}
           rows={1}
-          className="flex-1 resize-none pr-10 min-h-[40px]"
+          className="flex-1 resize-none min-h-0 h-10 px-3 py-2 text-center"
         />
-        <Button type="submit" size="icon" disabled={isLoading || !inputValue.trim()}>
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        <Button
+          type="submit"
+          disabled={isLoading || !inputValue.trim()}
+          className="h-10 px-4 flex items-center justify-center"
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
         </Button>
       </div>
+
+
     </form>
   );
 }
