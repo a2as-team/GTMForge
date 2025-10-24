@@ -13,30 +13,11 @@ interface MessageWithAgent {
   finalReportWithCitations?: boolean;
 }
 
-interface AgentMessage {
-  parts: { text: string }[];
-  role: string;
-}
 
-interface AgentResponse {
-  content: AgentMessage;
-  usageMetadata: {
-    candidatesTokenCount: number;
-    promptTokenCount: number;
-    totalTokenCount: number;
-  };
-  author: string;
-  actions: {
-    stateDelta: {
-      research_plan?: string;
-      final_report_with_citations?: boolean;
-    };
-  };
-}
 
 interface ProcessedEvent {
   title: string;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 export default function App() {
@@ -56,10 +37,10 @@ export default function App() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const retryWithBackoff = async (
-    fn: () => Promise<any>,
+    fn: () => Promise<unknown>,
     maxRetries: number = 10,
     maxDuration: number = 120000 // 2 minutes
-  ): Promise<any> => {
+  ): Promise<unknown> => {
     const startTime = Date.now();
     let lastError: Error;
     
@@ -134,17 +115,17 @@ export default function App() {
       // Check if content.parts exists and has text
       if (parsed.content && parsed.content.parts) {
         textParts = parsed.content.parts
-          .filter((part: any) => part.text)
-          .map((part: any) => part.text);
+          .filter((part: { text?: string }) => part.text)
+          .map((part: { text: string }) => part.text);
         
         // Check for function calls
-        const functionCallPart = parsed.content.parts.find((part: any) => part.functionCall);
+        const functionCallPart = parsed.content.parts.find((part: { functionCall?: unknown }) => part.functionCall);
         if (functionCallPart) {
           functionCall = functionCallPart.functionCall;
         }
         
         // Check for function responses
-        const functionResponsePart = parsed.content.parts.find((part: any) => part.functionResponse);
+        const functionResponsePart = parsed.content.parts.find((part: { functionResponse?: unknown }) => part.functionResponse);
         if (functionResponsePart) {
           functionResponse = functionResponsePart.functionResponse;
         }
@@ -283,7 +264,7 @@ export default function App() {
     }
   };
 
-  const handleSubmit = useCallback(async (query: string, model: string, effort: string) => {
+  const handleSubmit = useCallback(async (query: string) => {
     if (!query.trim()) return;
 
     setIsLoading(true);
@@ -295,7 +276,7 @@ export default function App() {
       
       if (!currentSessionId || !currentUserId || !currentAppName) {
         console.log('Creating new session...');
-        const sessionData = await retryWithBackoff(createSession);
+        const sessionData = await retryWithBackoff(createSession) as { userId: string; sessionId: string; appName: string };
         currentUserId = sessionData.userId;
         currentSessionId = sessionData.sessionId;
         currentAppName = sessionData.appName;
@@ -348,7 +329,7 @@ export default function App() {
         return response;
       };
 
-      const response = await retryWithBackoff(sendMessage);
+      const response = await retryWithBackoff(sendMessage) as Response;
 
       // Handle SSE streaming
       const reader = response.body?.getReader();
@@ -357,7 +338,6 @@ export default function App() {
       let eventDataBuffer = "";
 
       if (reader) {
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           const { done, value } = await reader.read();
 
@@ -419,7 +399,7 @@ export default function App() {
       }]);
       setIsLoading(false);
     }
-  }, [processSseEventData]);
+  }, [userId, sessionId, appName, createSession, processSseEventData]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -469,16 +449,16 @@ export default function App() {
   }, []);
 
   // Scroll to bottom when messages update
-  const scrollToBottom = useCallback(() => {
-    if (scrollAreaRef.current) {
-      const scrollViewport = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]"
-      );
-      if (scrollViewport) {
-        scrollViewport.scrollTop = scrollViewport.scrollHeight;
-      }
-    }
-  }, []);
+  // const scrollToBottom = useCallback(() => {
+  //   if (scrollAreaRef.current) {
+  //     const scrollViewport = scrollAreaRef.current.querySelector(
+  //       "[data-radix-scroll-area-viewport]"
+  //     );
+  //     if (scrollViewport) {
+  //       scrollViewport.scrollTop = scrollViewport.scrollHeight;
+  //     }
+  //   }
+  // }, []);
 
   const BackendLoadingScreen = () => (
     <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">

@@ -22,7 +22,7 @@ import ReactMarkdown from "react-markdown";
 
 export interface ProcessedEvent {
   title: string;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 interface ActivityTimelineProps {
@@ -39,23 +39,24 @@ export function ActivityTimeline({
   const [isTimelineCollapsed, setIsTimelineCollapsed] =
     useState<boolean>(false);
 
-  const formatEventData = (data: any): string => {
+  const formatEventData = (data: Record<string, unknown>): string => {
     // Handle new structured data types
     if (typeof data === "object" && data !== null && data.type) {
       switch (data.type) {
         case 'functionCall':
-          return `Calling function: ${data.name}\nArguments: ${JSON.stringify(data.args, null, 2)}`;
+          return `Calling function: ${String(data.name)}\nArguments: ${JSON.stringify(data.args, null, 2)}`;
         case 'functionResponse':
-          return `Function ${data.name} response:\n${JSON.stringify(data.response, null, 2)}`;
+          return `Function ${String(data.name)} response:\n${JSON.stringify(data.response, null, 2)}`;
         case 'text':
-          return data.content;
-        case 'sources':
+          return String(data.content);
+        case 'sources': {
           const sources = data.content as Record<string, { title: string; url: string }>;
           if (Object.keys(sources).length === 0) {
             return "No sources found.";
           }
           return Object.values(sources)
             .map(source => `[${source.title || 'Untitled Source'}](${source.url})`).join(', ');
+        }
         default:
           return JSON.stringify(data, null, 2);
       }
@@ -79,7 +80,7 @@ export function ActivityTimeline({
     return String(data);
   };
 
-  const isJsonData = (data: any): boolean => {
+  const isJsonData = (data: Record<string, unknown>): boolean => {
     // Handle new structured data types
     if (typeof data === "object" && data !== null && data.type) {
       if (data.type === 'sources') {
