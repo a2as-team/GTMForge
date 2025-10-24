@@ -40,7 +40,7 @@ interface ProcessedEvent {
 }
 
 export default function App() {
-  const agentName = import.meta.env.VITE_AGENT_NAME || "luna";
+  const agentName = import.meta.env.VITE_AGENT_NAME || "forge";
   const [userId, setUserId] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [appName, setAppName] = useState<string | null>(null);
@@ -489,7 +489,7 @@ export default function App() {
         
         <div className="text-center space-y-6">
           <h1 className="text-4xl font-bold text-white flex items-center justify-center gap-3">
-            ✨ Luna 🌙
+            GTMForge
           </h1>
           
           <div className="flex flex-col items-center space-y-4">
@@ -501,7 +501,7 @@ export default function App() {
             
             <div className="space-y-2">
               <p className="text-xl text-neutral-300">
-                Waking up the cosmos...
+                Initializing strategic systems...
               </p>
               <p className="text-sm text-neutral-400">
                 This may take a moment on first startup

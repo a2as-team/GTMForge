@@ -77,29 +77,29 @@
 }
 
 .dark {
-  /* Cosmic Luna Theme - Deep Purple Base */
-  --background: oklch(0.12 0.08 285);        /* Darker purple - more visible */
-  --foreground: oklch(0.92 0.02 270);        /* #e0e7ff - Moonlight text */
-  --card: oklch(0.18 0.08 285);              /* #1a0f2e - Dark purple cards */
-  --card-foreground: oklch(0.92 0.02 270);   /* Moonlight on cards */
-  --popover: oklch(0.15 0.06 285);
-  --popover-foreground: oklch(0.92 0.02 270);
-  --primary: oklch(0.72 0.15 280);           /* #a78bfa - Lavender accent */
-  --primary-foreground: oklch(0.98 0.01 270);/* Starlight on primary */
-  --secondary: oklch(0.20 0.08 285);         /* #251837 - Surface elevated */
-  --secondary-foreground: oklch(0.92 0.02 270);
-  --muted: oklch(0.20 0.08 285);
-  --muted-foreground: oklch(0.65 0.05 270);  /* Muted lavender text */
-  --accent: oklch(0.78 0.12 285);            /* #c4b5fd - Lavender light */
-  --accent-foreground: oklch(0.15 0.06 285);
+  /* GTMForge Professional Theme - Business Foundation */
+  --background: oklch(0.11 0.03 240);        /* Deep navy - #0f172a */
+  --foreground: oklch(0.98 0.01 240);        /* Clean white - #f8fafc */
+  --card: oklch(0.18 0.04 240);              /* Slate - #1e293b */
+  --card-foreground: oklch(0.98 0.01 240);   /* Clean white on cards */
+  --popover: oklch(0.15 0.04 240);
+  --popover-foreground: oklch(0.98 0.01 240);
+  --primary: oklch(0.57 0.21 252);           /* Primary blue - #3b82f6 */
+  --primary-foreground: oklch(0.98 0.01 240);/* Clean white on primary */
+  --secondary: oklch(0.20 0.04 240);         /* Lighter slate - #334155 */
+  --secondary-foreground: oklch(0.92 0.02 240);
+  --muted: oklch(0.20 0.04 240);
+  --muted-foreground: oklch(0.65 0.02 240);  /* Muted text - #94a3b8 */
+  --accent: oklch(0.67 0.18 252);            /* Primary light - #60a5fa */
+  --accent-foreground: oklch(0.98 0.01 240);
   --destructive: oklch(0.704 0.191 22.216);  /* Keep existing red */
-  --border: oklch(0.25 0.08 285 / 40%);      /* Subtle purple border */
-  --input: oklch(0.20 0.08 285 / 60%);       /* Purple input bg */
-  --ring: oklch(0.72 0.15 280);              /* Lavender focus ring */
+  --border: oklch(0.25 0.04 240 / 40%);      /* Subtle slate border */
+  --input: oklch(0.20 0.04 240 / 60%);       /* Slate input bg */
+  --ring: oklch(0.57 0.21 252);              /* Blue focus ring */
   
-  /* Cosmic Accents */
-  --cosmic-pink: oklch(0.72 0.15 10);        /* #ff8b94 - Warm energy */
-  --cosmic-coral: oklch(0.78 0.10 25);       /* #ffb4a2 - Friendly warmth */
+  /* Business Accents */
+  --success-green: oklch(0.65 0.15 160);     /* #10b981 - Success states */
+  --warning-orange: oklch(0.71 0.15 65);     /* #f59e0b - Attention/alerts */
   
   /* Charts - keep existing purple theme */
   --chart-1: oklch(0.488 0.243 264.376);

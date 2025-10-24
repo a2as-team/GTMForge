@@ -161,7 +161,7 @@ export function ActivityTimeline({
                 </div>
                 <div>
                   <p className="text-sm text-neutral-300 font-medium">
-                    Luna is thinking... 💭
+                    GTMForge is analyzing...
                   </p>
                 </div>
               </div>
@@ -221,7 +221,7 @@ export function ActivityTimeline({
                     </div>
                     <div>
                       <p className="text-sm text-neutral-300 font-medium">
-                        Luna is thinking... 💭
+                        GTMForge is analyzing...
                       </p>
                     </div>
                   </div>

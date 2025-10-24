@@ -1,5 +1,5 @@
 def main():
-    print("Hello from luna-adk!")
+    print("Hello from GTMForge!")
 
 
 if __name__ == "__main__":

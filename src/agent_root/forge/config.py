@@ -61,7 +61,7 @@ class PromptsConfiguration(BaseModel):
     def load_prompts_from_disk(cls, data: dict) -> dict:
         """Load prompt files from the prompts directory."""
         # Get prompts path from environment or use default
-        prompts_path = os.environ.get("LUNA_PROMPTS_PATH", "./prompts/luna")
+        prompts_path = os.environ.get("FORGE_PROMPTS_PATH", "./prompts/forge")
         prompts_dir = Path(prompts_path)
 
         if not prompts_dir.exists():
@@ -92,7 +92,7 @@ class PromptsConfiguration(BaseModel):
 
 
 class Configuration(BaseModel):
-    """Main configuration object for Luna.
+    """Main configuration object for Forge.
 
     Attributes:
         research_config (ResearchConfiguration): Research-related configuration.

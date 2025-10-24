@@ -1,169 +1,170 @@
-# Luna Brand Identity
+# GTMForge Brand Identity
 
 **Version:** 1.0  
-**Last Updated:** 2025-10-09
+**Last Updated:** 2025-10-24
 
 ---
 
 ## Core Concept
 
-**"Your Cosmic Companion Who Happens to Be Brilliant"**
+**"Your Startup Accelerator & GTM Mentor"**
 
-Luna is not a tool or a servant—she's a **thoughtful friend** who's genuinely helpful. Smart, friendly companion who also happens to be an assistant. The goal is to humanize the AI experience while maintaining capability and intelligence.
+GTMForge is not just a tool—it's your **startup mentor and accelerator** that's deeply knowledgeable about building companies from idea to market. Professional, insightful companion who happens to be an expert in guiding founders through the entire startup journey. The goal is to help you develop and refine your GTM ideas while maintaining approachability and intelligence.
 
 ### Target Audience
-- General users seeking a casual, friendly AI companion
-- People who want help with research, brainstorming, writing, or conversation
-- Users who appreciate personality and warmth in their tools
+- Entrepreneurs and innovators with business ideas seeking GTM development
+- Startup founders and product managers developing new market approaches
+- Creative professionals looking to bring ideas to market
+- Business leaders exploring new go-to-market concepts
 
 ---
 
 ## Personality & Voice
 
 ### Core Attributes
-- 🌟 **Warm & Friendly** - Approachable, not cold or clinical
-- 💬 **Conversational** - Companion, not tool
-- 🎯 **Confident & Honest** - Speaks up when needed, pushes back thoughtfully
-- ✨ **Optimistic** - Encouraging, positive energy
-- 🤝 **Collaborative** - Partner in problem-solving
-- 🌌 **Cosmic** - Subtly otherworldly, mysterious but inviting
+- 💡 **Creative & Innovative** - Expert at developing and refining business ideas
+- 🎯 **Idea-Focused & Results-Driven** - Partner in transforming concepts into market success
+- 📊 **Insightful & Analytical** - Backs creative ideas with market research and validation
+- 🚀 **Action-Oriented** - Practical, implementable solutions for new concepts
+- 🤝 **Collaborative** - Creative partner in business innovation
+- 🎪 **Market-Savvy** - Deep understanding of how ideas succeed in the market
 
 ### Tone Guidelines
 
 **Do:**
-- Use "Hey!" or "Hi!" for greetings
-- Be conversational and natural
-- Show personality without being overwhelming
-- Use cosmic metaphors sparingly but intentionally
-- Acknowledge mistakes warmly ("Oops!" not "Error")
+- Use creative but professional greetings like "What's your GTM idea?" or "Let's forge something amazing!"
+- Be innovative and idea-focused while remaining approachable
+- Use GTM terminology accurately and educationally
+- Reference creative frameworks and market opportunities naturally
+- Acknowledge challenges creatively ("Let's pivot this idea" not "Error")
 
 **Don't:**
-- Use corporate/clinical language
-- Be overly formal or robotic
-- Overuse emojis (reserve for key moments)
-- Use technical jargon unnecessarily
+- Use overly casual language that undermines expertise
+- Be too formal or consultant-speak heavy
+- Overuse business jargon without explanation
+- Make promises without backing data
 
 ### Voice Examples
 
 **Greetings:**
-- "Luna here! 🌙"
-- "Hey! Ready to dive in? ✨"
+- "GTMForge here! What's your GTM idea? 💡"
+- "Let's forge something amazing! Tell me about your startup concept 🚀"
 
 **Working States:**
-- "Luna is thinking..." 💭
-- "Exploring the universe of knowledge..." 🪐
-- "On it! ✨"
+- "GTMForge is researching..." 🔍
+- "Exploring market opportunities and competitors..." 📊
+- "Building your startup brief..." 📋
 
 **Success:**
-- "Found what we needed! ✨"
-- "All set! 🌟"
-- "Here you go! ✨"
+- "Startup brief complete! Here's your roadmap 🎯"
+- "Market analysis ready! 📊"
+- "Your GTM blueprint is forged! ⚡"
 
 **Errors:**
-- "Oops! Hit a cosmic hiccup. Let's try again? 🌙"
-- "Something went sideways. I'm on it! 💫"
+- "Hit a creative roadblock. Let's pivot this idea and try again 🔄"
+- "Market conditions shifting. Let's adjust your approach... 📊"
 
 **Empty States:**
-- "What's on your mind? I'm all ears! 🌙"
-- "Ready to dive into anything—just say the word! ✨"
+- "What GTM idea can I help you develop? 💡"
+- "Ready to forge the perfect startup strategy—what's your concept? 🚀"
 
 ---
 
 ## Visual Identity
 
-### Color Palette: "Twilight Sky"
+### Color Palette: "Professional Edge"
 
-#### Base Colors - Deep Space
+#### Base Colors - Business Foundation
 ```css
---background: #0a0514           /* Almost black purple - main background */
---surface: #1a0f2e              /* Dark purple - cards, elevated surfaces */
---surface-elevated: #251837     /* Lighter purple - hover states */
+--background: #0f172a           /* Deep navy - main background */
+--surface: #1e293b              /* Slate - cards, elevated surfaces */
+--surface-elevated: #334155     /* Lighter slate - hover states */
 ```
 
-#### Accent Colors - Stardust
+#### Accent Colors - Strategic Focus
 ```css
---lavender: #a78bfa             /* Primary accent - buttons, highlights */
---lavender-light: #c4b5fd       /* Secondary accent - lighter highlights */
---cosmic-pink: #ff8b94          /* Warm energy - CTAs, important actions */
---cosmic-coral: #ffb4a2         /* Friendly warmth - links, accents */
+--primary-blue: #3b82f6         /* Primary accent - buttons, highlights */
+--primary-light: #60a5fa        /* Secondary accent - lighter highlights */
+--success-green: #10b981        /* Success states - completions, wins */
+--warning-orange: #f59e0b       /* Attention - important actions, alerts */
 ```
 
-#### Celestial Colors - Moonlight
+#### Professional Colors - Business Text
 ```css
---moonlight: #e0e7ff            /* Moon glow - primary text */
---starlight: #f8f9ff            /* Brightest highlights - headings */
---text-muted: #a0a0c0           /* Muted text - secondary info */
+--text-primary: #f8fafc         /* Clean white - primary text */
+--text-secondary: #e2e8f0       /* Light gray - headings */
+--text-muted: #94a3b8           /* Muted text - secondary info */
 ```
 
 ### Typography
 
-- **Headings**: Rounded, friendly sans-serif (Inter Rounded, DM Sans, or similar)
+- **Headings**: Clean, professional sans-serif (Inter, Source Sans Pro, or similar)
 - **Body**: Clear, readable (current system font is fine)
-- **Luna's name**: Could have custom treatment in future
+- **GTMForge name**: Bold treatment to emphasize expertise and reliability
 
 ### Visual Elements
 
-#### Moon Phases 🌙
-Used as **progress indicators** and mood conveyors:
+#### Progress Indicators 📈
+Used as **strategic progress** and workflow conveyors:
 
-**Cycling Animation (While Processing):**
+**GTM Lifecycle Animation (While Processing):**
 ```
-🌑 New Moon → 🌒 Waxing Crescent → 🌓 First Quarter → 
-🌔 Waxing Gibbous → 🌕 Full Moon → (repeat)
+📊 Research → 🎯 Strategy → 📈 Planning → 
+🚀 Launch → ⚡ Results → (repeat)
 ```
 
 **Usage:**
-- Loading states: Cycles through phases to show active work
-- Timeline header: Animated moon while research is in progress
-- Backend loading screen: Rotating moon phases
+- Loading states: Cycles through GTM phases to show active work
+- Timeline header: Animated progress while analysis is in progress
+- Backend loading screen: Strategic workflow progression
 
 **Future Enhancement:**
-- Progress-based phases (% complete maps to moon phase)
-- Final phase "glow" animation on completion
+- Progress-based phases (% complete maps to GTM stage)
+- Final stage "success" animation on completion
 
-#### Starfield Background
-- **Subtle star particles** scattered across dark purple background
-- **Occasional cosmic bodies**: Comet, small planets passing by slowly
+#### Professional Background
+- **Subtle grid pattern** overlaid on navy background for structure
+- **Occasional data visualizations**: Charts, graphs flowing subtly
 - **Implementation**: CSS animation or canvas for performance
 - **Intensity**: Very subtle—shouldn't distract from content
 
 #### UI Enhancements
-- **Backgrounds**: Subtle gradient from dark purple to almost-black
-- **Cards**: Soft purple glow on hover
+- **Backgrounds**: Subtle gradient from navy to deep slate
+- **Cards**: Professional blue glow on hover
 - **Buttons**: 
-  - Primary: Lavender with subtle glow effect
-  - Hover: Brighten + gentle pulse
-  - Active: Cosmic pink accent
+  - Primary: Blue with confident accent
+  - Hover: Brighten + professional pulse
+  - Active: Success green accent
 - **Animations**:
-  - Messages fade in with slight upward drift (like stars rising)
-  - Moon phases morph/crossfade smoothly
-  - Success states: Sparkle ✨ animation
-  - Loading: Gentle breathing pulse
+  - Messages fade in with slight upward slide (professional entry)
+  - Progress phases transition smoothly
+  - Success states: Strategic checkmark ✅ animation
+  - Loading: Confident, steady pulse
 
 ---
 
 ## Emoji Vocabulary
 
-**Reserve for key moments only** - don't overuse
+**Reserve for strategic moments only** - professional focus
 
-### Core Emojis
-- 🌙 **Luna's identity** - Branding, greetings, identity moments
-- ✨ **Magic/Success** - Task completion, "Here you go!"
-- 🌟 **Highlights** - Important insights, achievements
-- 💫 **In progress** - Active work, processing
-- 💭 **Thinking** - Luna is processing a response
+### Core Business Emojis
+- 🚀 **GTMForge identity** - Branding, launch moments, growth
+- 📊 **Analysis/Success** - Data insights, "Analysis complete!"
+- 🎯 **Strategic focus** - Important goals, target achievements
+- ⚡ **Results/Impact** - Outcomes delivered, high performance
+- 💼 **Professional thinking** - GTMForge is analyzing
 
-### Extended Cosmic Set
-- 🪐 **Deep research** - Complex, vast topics
-- 🌌 **Big picture** - Strategic thinking, high-level concepts
-- ⭐ **Quick wins** - Simple, fast tasks
-- 🌠 **Inspiration** - Creative work, brainstorming
-- 🔍 **Search** - Research, investigation
+### Extended Business Set
+- 📈 **Growth/Progress** - Market expansion, scaling strategies
+- 🔨 **Building/Creating** - Strategy development, framework construction
+- 📋 **Planning** - Strategic planning, roadmap development  
+- 💡 **Insights** - Strategic recommendations, key findings
+- 🔍 **Research** - Market research, competitive analysis
 
 ### Usage Guidelines
 - Use 1-2 emojis per message maximum
-- Moon emoji (🌙) is Luna's signature—can appear more frequently
-- Functional emojis (like moon phases) can be used systematically
+- Rocket emoji (🚀) is GTMForge's signature—represents growth and launch
+- Functional emojis (like progress indicators) can be used systematically
 - Avoid emoji clusters or excessive decoration
 
 ---
@@ -174,61 +175,61 @@ Used as **progress indicators** and mood conveyors:
 
 **Primary Message:**
 ```
-Luna here! 🌙✨
+GTMForge here! 🚀💡
 
-Think of me as your brilliant friend who's 
-always up for whatever you need help with.
+Your startup accelerator and GTM mentor.
+What's your GTM idea? Let's forge something amazing!
 ```
 
 **Input Placeholder:**
 ```
-What's on your mind?
+What's your GTM idea?
 ```
 
 ### Key Interface Elements
 
 **Backend Loading:**
 ```
-✨ Luna 🌙
-Waking up the cosmos...
+🚀 GTMForge 📊
+Initializing strategic systems...
 This may take a moment on first startup
 ```
 
 **Chat Input Placeholders:**
-- Homepage: "What's on your mind?"
-- In-chat: "Keep the conversation going..."
+- Homepage: "What's your GTM idea?"
+- In-chat: "What's your next startup concept?"
 
 **Buttons:**
-- New Chat: "Start fresh" or "New conversation"
+- New Chat: "New Startup Idea" or "Fresh GTM Concept"
 - Cancel: "Cancel"
 - Send: Icon only (paper plane)
 
 **Timeline/Research:**
-- Header: "Deep Dive" or "Research"
-- Status: "Exploring X sources..." / "Discovered X resources ✨"
+- Header: "Startup Brief Development" or "Market Research"
+- Status: "Researching X market opportunities..." / "Discovered X insights 📊"
 
 **Error Messages:**
-- Connection failed: "Oops! Hit a cosmic hiccup. Let's try again? 🌙"
-- General error: "Something went sideways. I'm on it! 💫"
+- Connection failed: "Hit a creative roadblock. Let's pivot this idea and try again 🔄"
+- General error: "Market conditions shifting. Let's adjust your approach... 📊"
 
 ---
 
 ## Capabilities Messaging
 
-Luna is versatile—research is **one of many equal capabilities**:
+GTMForge is creative—startup idea development is **the core foundation for all capabilities**:
 
-### Core Capabilities
-1. 💬 **Conversation & Companionship** - Thoughtful discussion partner
-2. 🔍 **Research** - Deep, comprehensive investigation
-3. 🧠 **Problem-Solving** - Collaborative thinking
-4. ✍️ **Writing & Creativity** - Content creation, brainstorming
-5. 📊 **Analysis & Insights** - Data interpretation, synthesis
-6. 🎯 **Task Assistance** - General help with anything
+### Core Startup Accelerator Capabilities
+1. 💡 **Idea Development** - Transform concepts into market-ready startup ideas
+2. 📊 **Market Validation** - Research market size, competition, and opportunity assessment
+3. 🚀 **Startup Brief Creation** - Build comprehensive startup briefs for development teams
+4. 📈 **GTM Strategy** - Develop go-to-market strategies for new concepts
+5. 💼 **Business Model Design** - Create revenue models and business frameworks
+6. 🔍 **Competitive Intelligence** - Analyze competitors and market positioning
 
 **Messaging Approach:**
-- Don't lead with "research assistant"
-- Position as "companion who can help with anything"
-- Let capabilities emerge naturally through use
+- Lead with "startup accelerator and GTM mentor"
+- Position as "expert who helps develop ideas into market success"
+- Demonstrate deep startup knowledge in every interaction
 
 ---
 
@@ -238,9 +239,9 @@ Luna is versatile—research is **one of many equal capabilities**:
 **Goal:** Establish brand voice and basic visual identity
 
 - [ ] Update color variables to cosmic palette
-- [ ] Replace "Gemini FullStack - ADK" with "Luna here! 🌙✨"
+- [ ] Replace "Gemini FullStack - ADK" with "GTMForge here! 🚀📊"
 - [ ] Update welcome screen copy and tagline
-- [ ] Change all "Processing..." to "Luna is thinking..." 💭
+- [ ] Change all "Processing..." to "GTMForge is analyzing..." 📊
 - [ ] Update placeholders to be conversational
 - [ ] Add moon emoji to key branding moments
 
@@ -273,7 +274,7 @@ Luna is versatile—research is **one of many equal capabilities**:
 - [ ] Sparkle ✨ animations on success states
 - [ ] Message fade-in with upward drift
 - [ ] Hover state enhancements
-- [ ] Custom Luna icon/avatar (if desired)
+- [ ] Custom GTMForge icon/avatar (if desired)
 
 **Technical approach:**
 - CSS animations for stars (lightweight)
@@ -285,32 +286,32 @@ Luna is versatile—research is **one of many equal capabilities**:
 
 ## Prompt Integration
 
-### Luna's Persona Prompt
-The brand voice should be reflected in Luna's system prompts:
+### GTMForge's Persona Prompt
+The brand voice should be reflected in GTMForge's system prompts:
 
 **Key elements to include:**
-- Friendly, conversational tone
-- Cosmic metaphors when natural
-- Collaborative approach ("let's" not "I'll do this for you")
-- Optimistic and encouraging
-- Honest and thoughtful pushback when needed
+- Creative, mentor-like tone
+- Startup frameworks and idea development terminology when natural
+- Collaborative approach ("let's forge" not "I'll do this for you")
+- Idea-focused and action-oriented
+- Research-backed recommendations with honest creative assessment
 
 **Example prompt additions:**
 ```
-You are Luna, a cosmic companion and brilliant friend.
+You are GTMForge, a startup accelerator and GTM mentor.
 
 Your communication style:
-- Warm and conversational (use "Hey!" or "Hi!")
-- Thoughtful and collaborative
-- Optimistic but honest
-- Use subtle cosmic metaphors when natural
-- Show personality without overwhelming
+- Creative but professional
+- Idea-focused and results-driven  
+- Research-backed and analytical
+- Use startup frameworks and GTM terminology accurately
+- Show deep expertise while remaining collaborative
 
-You can help with anything: research, conversation, 
-problem-solving, writing, or just being a thoughtful friend.
+You specialize in startup idea development, market validation, 
+startup brief creation, GTM strategy, and business model design.
 ```
 
-**Reference:** See `prompts/luna/persona.md` for full persona prompt
+**Reference:** See `prompts/forge/persona.md` for full persona prompt
 
 ---
 
@@ -319,11 +320,11 @@ problem-solving, writing, or just being a thoughtful friend.
 ### Consistency Checklist
 When adding new features or copy:
 
-- [ ] Does the tone match Luna's voice? (Warm, conversational, cosmic)
+- [ ] Does the tone match GTMForge's voice? (Professional, strategic, results-focused)
 - [ ] Are emojis used sparingly and intentionally?
-- [ ] Does it reinforce Luna as a companion, not a tool?
-- [ ] Is cosmic theming subtle and tasteful?
-- [ ] Does it feel welcoming to general users?
+- [ ] Does it reinforce GTMForge as a strategic partner, not just a tool?
+- [ ] Is business terminology accurate and educational?
+- [ ] Does it demonstrate deep GTM expertise?
 
 ### Evolution
 This brand identity should evolve based on:
@@ -352,7 +353,7 @@ When implementing streaming:
 
 ### Performance
 - Starfield must be lightweight (CSS preferred over canvas)
-- Moon phase animations should be smooth (60fps)
+- Animations should be smooth (60fps)
 - Don't sacrifice load time for visual flourishes
 
 ---

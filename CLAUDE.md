@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Luna is a fullstack research agent built with Google's Agent Development Kit (ADK) and Gemini models. It implements a sophisticated multi-agent workflow that creates research plans, executes autonomous web searches, and generates comprehensive cited reports through an iterative refinement loop.
+GTMForge is a strategic go-to-market agent built with Google's Agent Development Kit (ADK) and Gemini models. It implements a sophisticated multi-agent workflow that creates GTM strategies, executes market research, and generates comprehensive business intelligence reports through an iterative refinement loop.
 
 ### Technology Stack
 
@@ -49,10 +49,10 @@ npm run preview      # Preview production build
 
 ### Agent Hierarchy
 
-The agent system follows a hierarchical multi-agent architecture defined in `src/agent_root/luna/`:
+The agent system follows a hierarchical multi-agent architecture defined in `src/agent_root/forge/`:
 
-1. **Root Agent** (`luna/agent.py`): Main entry point that delegates to the deep research agent
-2. **Deep Research Agent** (`luna/deep_research/agent.py`): Implements a two-phase workflow:
+1. **Root Agent** (`forge/agent.py`): Main entry point that delegates to the deep research agent
+2. **Deep Research Agent** (`forge/deep_research/agent.py`): Implements a two-phase workflow:
 
 #### Phase 1: Plan & Refine (Human-in-the-Loop)
 - `interactive_research_planner_agent`: Coordinates the planning process
@@ -78,12 +78,12 @@ The agent system follows a hierarchical multi-agent architecture defined in `src
 
 ### Configuration System
 
-`src/agent_root/luna/config.py` provides centralized configuration:
+`src/agent_root/forge/config.py` provides centralized configuration:
 
 - **ResearchConfiguration**: Model selection (`gemini-2.5-pro` for critic, `gemini-2.5-flash` for worker) and max iterations
-- **PromptsConfiguration**: Auto-loads persona and other prompts from `prompts/luna/` directory
+- **PromptsConfiguration**: Auto-loads persona and other prompts from `prompts/forge/` directory
 - **Environment Variables**:
-  - `LUNA_PROMPTS_PATH`: Override prompts directory (default: `./prompts/luna`)
+  - `FORGE_PROMPTS_PATH`: Override prompts directory (default: `./prompts/forge`)
   - `GOOGLE_GENAI_USE_VERTEXAI`: Toggle between AI Studio (FALSE) and Vertex AI (True)
   - `GOOGLE_API_KEY`: API key for AI Studio
   - `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`: For Vertex AI
@@ -102,9 +102,9 @@ The frontend (`src/frontend/`) expects specific agent names to update UI correct
 ## Project Structure
 
 ```
-luna-adk/
+gtmforge/
 ├── src/
-│   ├── agent_root/luna/        # Backend agent code
+│   ├── agent_root/forge/       # Backend agent code
 │   │   ├── agent.py            # Root agent entry point
 │   │   ├── config.py           # Configuration and settings
 │   │   └── deep_research/      # Deep research agent implementation
@@ -112,7 +112,7 @@ luna-adk/
 │   ├── frontend/               # React frontend application
 │   └── README.md               # Detailed technical documentation
 ├── prompts/
-│   └── luna/
+│   └── forge/
 │       └── persona.md          # Agent persona definition
 ├── docs/                       # Project documentation
 ├── pyproject.toml              # Python dependencies and project config
@@ -129,14 +129,14 @@ The ADK backend uses a special command structure. The Makefile's `make dev-backe
 uv run adk web src/app --port 8501 --allow_origins="*"
 ```
 
-Note: The `src/app` path referenced in the Makefile does not currently exist in the repository. The actual agent code is in `src/agent_root/luna/`. This may need to be corrected.
+Note: The `src/app` path referenced in the Makefile does not currently exist in the repository. The actual agent code is in `src/agent_root/forge/`. This may need to be corrected.
 
 ### Modifying Agent Behavior
 
-- **Agent logic**: Edit agent definitions and instructions in `src/agent_root/luna/deep_research/agent.py`
-- **Model selection**: Update `ResearchConfiguration` in `src/agent_root/luna/config.py`
-- **Agent persona**: Edit `prompts/luna/persona.md`
-- **Additional prompts**: Add `.md` files to `prompts/luna/` (auto-loaded into `config.prompts_config.extras`)
+- **Agent logic**: Edit agent definitions and instructions in `src/agent_root/forge/deep_research/agent.py`
+- **Model selection**: Update `ResearchConfiguration` in `src/agent_root/forge/config.py`
+- **Agent persona**: Edit `prompts/forge/persona.md`
+- **Additional prompts**: Add `.md` files to `prompts/forge/` (auto-loaded into `config.prompts_config.extras`)
 
 ### Citation System
 

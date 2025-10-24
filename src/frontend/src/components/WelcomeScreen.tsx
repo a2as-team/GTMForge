@@ -28,10 +28,10 @@ export function WelcomeScreen({
         {/* Header section of the card */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-white flex items-center justify-center gap-3">
-            Luna here! 🌙✨
+            GTMForge
           </h1>
           <p className="text-lg text-neutral-300 max-w-md mx-auto">
-            Think of me as your brilliant friend who's always up for whatever you need help with.
+            Your startup accelerator and GTM mentor. What's your GTM idea? Let's forge something amazing!
           </p>
         </div>
 

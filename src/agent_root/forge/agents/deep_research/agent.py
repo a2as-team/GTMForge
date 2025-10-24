@@ -371,7 +371,8 @@ research_pipeline = SequentialAgent(
     name="research_pipeline",
     description="Executes a pre-approved research plan. It performs iterative research, evaluation, and composes a final, cited report.",
     sub_agents=[
-        section_planner,
+        section_planner, 
+        # !! change to make it for business plan instead of research
         section_researcher,
         LoopAgent(
             name="iterative_refinement_loop",
@@ -385,6 +386,9 @@ research_pipeline = SequentialAgent(
         report_composer,
     ],
 )
+
+# !! 
+# research market, define product requirements, help startup research market and create product and brief , business plan , look & feel, product spec
 
 interactive_research_planner_agent = LlmAgent(
     name="interactive_research_planner_agent",
