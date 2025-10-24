@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import Header from '@/components/Header'
-import IdeaForm from '@/components/IdeaForm'
-import ProgressView from '@/components/ProgressView'
-import ResultsView from '@/components/ResultsView'
-import ErrorView from '@/components/ErrorView'
+import Header from '../components/Header'
+import IdeaForm from '../components/IdeaForm'
+import ProgressView from '../components/ProgressView'
+import ResultsView from '../components/ResultsView'
+import ErrorView from '../components/ErrorView'
 
 type ViewType = 'input' | 'progress' | 'results' | 'error'
 
