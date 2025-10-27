@@ -449,17 +449,7 @@ export default function App() {
     window.location.reload();
   }, []);
 
-  // Scroll to bottom when messages update
-  // const scrollToBottom = useCallback(() => {
-  //   if (scrollAreaRef.current) {
-  //     const scrollViewport = scrollAreaRef.current.querySelector(
-  //       "[data-radix-scroll-area-viewport]"
-  //     );
-  //     if (scrollViewport) {
-  //       scrollViewport.scrollTop = scrollViewport.scrollHeight;
-  //     }
-  //   }
-  // }, []);
+
 
   const BackendLoadingScreen = () => (
     <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">
@@ -470,11 +460,10 @@ export default function App() {
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient-flow" style={{backgroundSize: '200% 200%'}}>
               GTMForge
             </span>
-            <span className="text-4xl">🚀💡</span>
           </h1>
           
           <div className="flex flex-col items-center space-y-4">
-            {/* Rainbow gradient spinning animation */}
+
             <div className="relative">
               <div className="w-16 h-16 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin"></div>
               <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-b-blue-500 border-l-orange-400 rounded-full animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>

@@ -3,21 +3,19 @@ import VerticalGallery from "./VerticalGallery";
 export default function DualVerticalGalleries() {
   return (
     <>
-      {/* Left Gallery - full height, manual + auto scroll down */}
       <VerticalGallery
         items={leftItems}
-        widthClass="w-[260px] left-0"
-        itemSize={150}
+        widthClass="w-[280px] left-0"
+        itemSize={200}
         speedMs={45000}
         direction="down"
         className="opacity-100"
       />
 
-      {/* Right Gallery - full height, manual + auto scroll up */}
       <VerticalGallery
         items={rightItems}
-        widthClass="w-[260px] right-0"
-        itemSize={150}
+        widthClass="w-[280px] right-0"
+        itemSize={200}
         speedMs={40000}
         direction="up"
         className="opacity-100"
@@ -27,49 +25,42 @@ export default function DualVerticalGalleries() {
 }
 
 const leftItems = [
-  { id: 1, src: "https://picsum.photos/seed/left1/800/800", alt: "SaaS Launch" },
-  { id: 2, src: "https://picsum.photos/seed/left2/800/800", alt: "Product Strategy" },
-  { id: 3, src: "https://picsum.photos/seed/left3/800/800", alt: "Market Entry" },
-  { id: 4, src: "https://picsum.photos/seed/left4/800/800", alt: "Growth Hacking" },
-  { id: 5, src: "https://picsum.photos/seed/left5/800/800", alt: "B2B Marketing" },
-  { id: 6, src: "https://picsum.photos/seed/left6/800/800", alt: "Channel Strategy" },
-  { id: 7, src: "https://picsum.photos/seed/left7/800/800", alt: "Pricing Model" },
-  { id: 8, src: "https://picsum.photos/seed/left8/800/800", alt: "Customer Acquisition" },
-  { id: 9, src: "https://picsum.photos/seed/left9/800/800", alt: "Brand Positioning" },
-  { id: 10, src: "https://picsum.photos/seed/left10/800/800", alt: "Product-Market Fit" },
-  { id: 11, src: "https://picsum.photos/seed/left11/800/800", alt: "Competitive Analysis" },
-  { id: 12, src: "https://picsum.photos/seed/left12/800/800", alt: "Sales Funnel" },
-  { id: 13, src: "https://picsum.photos/seed/left13/800/800", alt: "Retention Strategy" },
-  { id: 14, src: "https://picsum.photos/seed/left14/800/800", alt: "Market Segmentation" },
-  { id: 15, src: "https://picsum.photos/seed/left15/800/800", alt: "Value Proposition" },
-  { id: 16, src: "https://picsum.photos/seed/left16/800/800", alt: "User Onboarding" },
-  { id: 17, src: "https://picsum.photos/seed/left17/800/800", alt: "Content Marketing" },
-  { id: 18, src: "https://picsum.photos/seed/left18/800/800", alt: "Partnership Strategy" },
-  { id: 19, src: "https://picsum.photos/seed/left19/800/800", alt: "Revenue Model" },
-  { id: 20, src: "https://picsum.photos/seed/left20/800/800", alt: "Launch Timeline" },
+  { id: 1,  src: "/images/greenleaf.jpg",    alt: "GreenLeaf" },
+  { id: 2,  src: "/images/onboardOS.jpg",    alt: "OnboardOS" },
+  { id: 3,  src: "/images/relay.jpg",        alt: "Relay" },
+  { id: 4,  src: "/images/knighthacks.jpg",  alt: "KnightHacks" },
+  { id: 5,  src: "/images/shadowhire.jpg",   alt: "Shadowhire" },
+  { id: 6,  src: "/images/knightmentor.jpg", alt: "KnightMentor" },
+  { id: 7,  src: "/images/ledgerless.jpg",   alt: "Ledgerless" },
+  { id: 8,  src: "/images/orbit.jpg",        alt: "Orbit" },
+  { id: 9,  src: "/images/atlaspitch.jpg",   alt: "AtlasPitch" },
+  { id: 10, src: "/images/ecotracker.jpg",   alt: "EcoTracker" },
+  { id: 11, src: "/images/synclayer.jpg",    alt: "Ledgerless" },
+  { id: 12, src: "/images/pawporter.jpg",    alt: "PawPorter" },
+  { id: 13, src: "/images/composer.jpg",     alt: "Composer" },
+  { id: 14, src: "/images/ixmyride.jpg",     alt: "IxMyRide" },
+  { id: 15, src: "/images/queuequest.jpg",   alt: "QueueQuest" },
+  { id: 16, src: "/images/musemap.jpg",      alt: "MuseMap" },
 ];
 
 const rightItems = [
-  { id: 'a', src: "https://picsum.photos/seed/rightA/800/800", alt: "Digital Transformation" },
-  { id: 'b', src: "https://picsum.photos/seed/rightB/800/800", alt: "Enterprise Sales" },
-  { id: 'c', src: "https://picsum.photos/seed/rightC/800/800", alt: "MVP Strategy" },
-  { id: 'd', src: "https://picsum.photos/seed/rightD/800/800", alt: "Market Validation" },
-  { id: 'e', src: "https://picsum.photos/seed/rightE/800/800", alt: "Startup Metrics" },
-  { id: 'f', src: "https://picsum.photos/seed/rightF/800/800", alt: "Lead Generation" },
-  { id: 'g', src: "https://picsum.photos/seed/rightG/800/800", alt: "Community Building" },
-  { id: 'h', src: "https://picsum.photos/seed/rightH/800/800", alt: "Product Demo" },
-  { id: 'i', src: "https://picsum.photos/seed/rightI/800/800", alt: "Market Research" },
-  { id: 'j', src: "https://picsum.photos/seed/rightJ/800/800", alt: "Pitch Deck" },
-  { id: 'k', src: "https://picsum.photos/seed/rightK/800/800", alt: "Unit Economics" },
-  { id: 'l', src: "https://picsum.photos/seed/rightL/800/800", alt: "User Personas" },
-  { id: 'm', src: "https://picsum.photos/seed/rightM/800/800", alt: "PLG Strategy" },
-  { id: 'n', src: "https://picsum.photos/seed/rightN/800/800", alt: "Market Trends" },
-  { id: 'o', src: "https://picsum.photos/seed/rightO/800/800", alt: "Conversion Optimization" },
-  { id: 'p', src: "https://picsum.photos/seed/rightP/800/800", alt: "Brand Voice" },
-  { id: 'q', src: "https://picsum.photos/seed/rightQ/800/800", alt: "Referral Program" },
-  { id: 'r', src: "https://picsum.photos/seed/rightR/800/800", alt: "Customer Journey" },
-  { id: 's', src: "https://picsum.photos/seed/rightS/800/800", alt: "Market Expansion" },
-  { id: 't', src: "https://picsum.photos/seed/rightT/800/800", alt: "Investor Relations" },
+  { id: 17, src: "/images/knighthacks.jpg",  alt: "KnightHacks" },
+  { id: 18, src: "/images/relay.jpg",        alt: "Relay" },
+  { id: 19, src: "/images/onboardOS.jpg",    alt: "OnboardOS" },
+  { id: 20, src: "/images/ecotracker.jpg",   alt: "EcoTracker" },
+  { id: 21, src: "/images/pawporter.jpg",    alt: "PawPorter" },
+  { id: 22, src: "/images/atlaspitch.jpg",   alt: "AtlasPitch" },
+  { id: 23, src: "/images/synclayer.jpg",   alt: "SyncLayer" },
+  { id: 24, src: "/images/composer.jpg",     alt: "Composer" },
+  { id: 25, src: "/images/queuequest.jpg",    alt: "QueueQuest" },
+  { id: 26, src: "/images/ixmyride.jpg",     alt: "IxMyRide" },
+  { id: 27, src: "/images/ledgerless.jpg",   alt: "Ledgerless" },
+  { id: 28, src: "/images/musemap.jpg",      alt: "MuseMap" },
+  { id: 29, src: "/images/knightmentor.jpg", alt: "KnightMentor" },
+  { id: 30, src: "/images/shadowhire.jpg",   alt: "Shadowhire" },
+  { id: 31, src: "/images/greenleaf.jpg",    alt: "GreenLeaf" },
+  { id: 32, src: "/images/orbit.jpg",        alt: "Orbit" },
 ];
+
 
 

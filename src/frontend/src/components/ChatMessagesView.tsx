@@ -206,6 +206,15 @@ const AiMessageBubble: React.FC<AiMessageBubbleProps> = ({
           </div>
         )}
 
+        {isMessageLoading && (
+          <div className="rounded-2xl break-words max-w-[85%] lg:max-w-[70%] px-4 py-2.5 border border-white/30 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm text-gray-600">GTMForge is thinking...</span>
+            </div>
+          </div>
+        )}
+
         {hasContent && !isMessageLoading && (
         <div 
           className="rounded-2xl break-words max-w-[85%] lg:max-w-[70%] px-4 py-2.5 border border-white/30 shadow-lg transition-all duration-500 ease-out"
@@ -245,7 +254,16 @@ const AiMessageBubble: React.FC<AiMessageBubbleProps> = ({
             websiteCount={websiteCount}
           />
         </div>
-        {message.content && message.content.trim() && agent !== agentName && (
+        {isMessageLoading && (
+          <div className="rounded-2xl break-words max-w-[85%] lg:max-w-[70%] px-4 py-2.5 border border-white/30 shadow-lg mt-2">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm text-gray-600">GTMForge is thinking...</span>
+            </div>
+          </div>
+        )}
+
+        {message.content && message.content.trim() && agent !== agentName && !isMessageLoading && (
           <div className="rounded-2xl break-words max-w-[85%] lg:max-w-[70%] px-4 py-2.5 border border-white/30 shadow-lg mt-2">
             <div className="flex items-start gap-3">
               <div className="flex-1 prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
@@ -272,15 +290,26 @@ const AiMessageBubble: React.FC<AiMessageBubbleProps> = ({
     // Fallback for other messages - just show content
     return (
       <div className="relative break-words flex flex-col w-full">
-        <div className="rounded-2xl break-words max-w-[85%] lg:max-w-[70%] px-4 py-2.5">
-          <div className="flex items-start gap-3">
-            <div className="flex-1 prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-              <ReactMarkdown components={mdComponents} remarkPlugins={[remarkGfm]}>
-                {message.content}
-              </ReactMarkdown>
+        {isMessageLoading && (
+          <div className="rounded-2xl break-words max-w-[85%] lg:max-w-[70%] px-4 py-2.5 border border-white/30 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm text-gray-600">GTMForge is thinking...</span>
             </div>
           </div>
-        </div>
+        )}
+
+        {!isMessageLoading && message.content && (
+          <div className="rounded-2xl break-words max-w-[85%] lg:max-w-[70%] px-4 py-2.5">
+            <div className="flex items-start gap-3">
+              <div className="flex-1 prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                <ReactMarkdown components={mdComponents} remarkPlugins={[remarkGfm]}>
+                  {message.content}
+                </ReactMarkdown>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -320,11 +349,10 @@ export function ChatMessagesView({
     }
   };
 
-  const handleNewChat = () => {
+  const handleNewChat = () => { 
     window.location.reload();
   };
 
-  // Find the ID of the last AI message
   const lastAiMessage = messages.slice().reverse().find(m => m.type === "ai");
   const lastAiMessageId = lastAiMessage?.id;
 
