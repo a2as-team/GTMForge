@@ -552,6 +552,7 @@ export default function App() {
                 messages={messages}
                 isLoading={isLoading}
                 onCancel={handleCancel}
+                sessionId={sessionId || undefined}
               />
             </PageTransition>
           )}

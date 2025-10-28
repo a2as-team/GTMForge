@@ -55,6 +55,7 @@ interface ProgressDashboardProps {
   messages: Array<{ type: string; content: string; agent?: string; id: string }>;
   isLoading: boolean;
   onCancel: () => void;
+  sessionId?: string;
 }
 
 export function ProgressDashboard({
@@ -62,6 +63,7 @@ export function ProgressDashboard({
   messages,
   isLoading,
   onCancel,
+  sessionId,
 }: ProgressDashboardProps) {
   const [stageStatuses, setStageStatuses] = useState<Record<number, StageStatus>>(
     Object.fromEntries(STAGES.map((s) => [s.id, "pending" as StageStatus]))
@@ -221,9 +223,16 @@ export function ProgressDashboard({
             <span>
               {Array.from(completedStages).length} of {STAGES.length} stages complete
             </span>
-            {isLoading && estimatedTimeRemaining > 0 && (
-              <span>~{estimatedTimeRemaining} minutes remaining</span>
-            )}
+            <div className="flex items-center gap-4">
+              {isLoading && estimatedTimeRemaining > 0 && (
+                <span>~{estimatedTimeRemaining} minutes remaining</span>
+              )}
+              {sessionId && (
+                <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded border border-gray-300">
+                  Session: {sessionId.slice(0, 8)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
