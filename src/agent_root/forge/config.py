@@ -42,7 +42,7 @@ class ResearchConfiguration(BaseModel):
 
     critic_model: str = "gemini-2.5-pro"
     worker_model: str = "gemini-2.5-flash"
-    max_search_iterations: int = 5
+    max_search_iterations: int = 2
 
 
 class PromptsConfiguration(BaseModel):

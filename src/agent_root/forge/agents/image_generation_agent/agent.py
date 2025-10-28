@@ -11,7 +11,7 @@ prompt = """
 Review the following GTM brief and generate a logo for the product described in the brief.
 
 GTM Brief:
-{company_brief}
+{+company_brief}+
 """
 
 

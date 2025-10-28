@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { WelcomeScreen } from "@/components/WelcomeScreen";
-import { ChatMessagesView } from "@/components/ChatMessagesView";
+import { ProgressDashboard } from "@/components/ProgressDashboard";
 import PageTransition from "@/components/animations/PageTransition";
 
 // Update DisplayData to be a string type
@@ -37,7 +37,7 @@ export default function App() {
   const accumulatedTextRef = useRef("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const retryWithBackoff = async (
+  const retryWithBackoff = useCallback(async (
     fn: () => Promise<unknown>,
     maxRetries: number = 10,
     maxDuration: number = 120000 // 2 minutes
@@ -61,9 +61,9 @@ export default function App() {
     }
     
     throw lastError!;
-  };
+  }, []);
 
-  const createSession = async (): Promise<{userId: string, sessionId: string, appName: string}> => {
+  const createSession = useCallback(async (): Promise<{userId: string, sessionId: string, appName: string}> => {
     const generatedSessionId = uuidv4();
     const response = await fetch(`/api/apps/${agentName}/users/u_999/sessions/${generatedSessionId}`, {
       method: "POST",
@@ -82,7 +82,7 @@ export default function App() {
       sessionId: data.id,
       appName: data.appName
     };
-  };
+  }, [agentName]);
 
   const checkBackendHealth = async (): Promise<boolean> => {
     try {
@@ -202,7 +202,7 @@ export default function App() {
     }
   };
 
-  const processSseEventData = (jsonData: string, aiMessageId: string) => {
+  const processSseEventData = useCallback((jsonData: string, aiMessageId: string) => {
     const { textParts, agent, finalReportWithCitations, functionCall, functionResponse, sourceCount, sources } = extractDataFromSSE(jsonData);
 
     if (sourceCount > 0) {
@@ -263,7 +263,7 @@ export default function App() {
       setMessages(prev => [...prev, { type: "ai", content: finalReportWithCitations as string, id: finalReportMessageId, agent: currentAgentRef.current, finalReportWithCitations: true }]);
       setDisplayData(finalReportWithCitations as string);
     }
-  };
+  }, [agentName]);
 
   const handleSubmit = useCallback(async (query: string) => {
     if (!query.trim()) return;
@@ -522,16 +522,11 @@ export default function App() {
             </PageTransition>
           ) : (
             <PageTransition isActive={messages.length > 0}>
-              <ChatMessagesView
+              <ProgressDashboard
+                currentAgent={currentAgentRef.current}
                 messages={messages}
                 isLoading={isLoading}
-                scrollAreaRef={scrollAreaRef}
-                onSubmit={handleSubmit}
                 onCancel={handleCancel}
-                displayData={displayData}
-                messageEvents={messageEvents}
-                websiteCount={websiteCount}
-                agentName={agentName}
               />
             </PageTransition>
           )}

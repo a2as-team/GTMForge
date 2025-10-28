@@ -7,13 +7,14 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Optional
 
-from google.adk.agents import LlmAgent, LoopAgent, SequentialAgent
+from google.adk.agents import LlmAgent, LoopAgent, SequentialAgent, BaseAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
-from google.adk.agents import BaseAgent
+from google.genai import types as genai_types
 from collections.abc import AsyncGenerator
 
 from pydantic import BaseModel, Field
@@ -55,6 +56,19 @@ class MockupsManifest(BaseModel):
 
 def initialize_mockup_queue_callback(callback_context: CallbackContext) -> None:
     """Initialize the mockup generation queue from extracted prompts."""
+    # Debug: Check if PRD exists
+    prd = callback_context.state.get("product_requirements_doc")
+    if prd:
+        logging.info(f"[mockups_agent] PRD found, length: {len(prd)} characters")
+        # Check if it contains Imagen prompts
+        if "**Imagen Mockup Prompt**:" in prd:
+            count = prd.count("**Imagen Mockup Prompt**:")
+            logging.info(f"[mockups_agent] Found {count} Imagen Mockup Prompts in PRD")
+        else:
+            logging.warning("[mockups_agent] No '**Imagen Mockup Prompt**:' found in PRD")
+    else:
+        logging.warning("[mockups_agent] No PRD found in state")
+    
     prompts_payload = callback_context.state.get("mockup_prompts_list")
 
     if not prompts_payload:
@@ -125,37 +139,82 @@ class MockupLoopTerminator(BaseAgent):
         yield Event(author=self.name, actions=EventActions(escalate=True))
 
 
-mockup_prompt_extractor = LlmAgent(
-    name="mockup_prompt_extractor",
-    model=config.research_config.worker_model,
-    description="Extracts Imagen mockup prompts from the PRD.",
-    instruction="""
-    You are a Product Requirements Analyst specializing in extracting UI mockup specifications.
+# Create a simple base agent that just extracts prompts manually
+class MockupPromptExtractorAgent(BaseAgent):
+    """Manually extracts mockup prompts from PRD."""
+    
+    def __init__(self, **data):
+        super().__init__(
+            name="mockup_prompt_extractor",
+            description="Extracts Imagen mockup prompts from the PRD",
+            **data
+        )
+    
+    async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+        # Extract prompts directly from PRD
+        prd = ctx.session.state.get("product_requirements_doc", "")
+        
+        if not prd:
+            logging.warning("[mockup_prompt_extractor] No PRD found in state")
+            ctx.session.state["mockup_prompts_list"] = {"prompts": []}
+            yield Event(author=self.name)
+            return
+        
+        logging.info(f"[mockup_prompt_extractor] PRD found, length: {len(prd)} characters")
+        
+        prompts = []
+        
+        # Split PRD into sections based on "### Screen" pattern
+        import re
+        screen_sections = re.split(r'### Screen \d+:', prd)
+        
+        for i, section in enumerate(screen_sections[1:], 0):  # Skip the first split before any screen
+            # Extract screen name from first line
+            lines = section.strip().split('\n')
+            if not lines:
+                continue
+                
+            screen_name = lines[0].strip()
+            
+            # Look for Imagen Mockup Prompt
+            if "**Imagen Mockup Prompt**:" in section:
+                # Extract everything after "**Imagen Mockup Prompt**:"
+                prompt_start = section.find("**Imagen Mockup Prompt**:") + len("**Imagen Mockup Prompt**:")
+                
+                # Find the end of the prompt (next section or end of content)
+                prompt_end = section.find("\n\n---", prompt_start)
+                if prompt_end == -1:
+                    prompt_end = section.find("\n\n###", prompt_start)
+                if prompt_end == -1:
+                    prompt_end = section.find("\n\n##", prompt_start)
+                if prompt_end == -1:
+                    prompt_end = len(section)
+                
+                imagen_prompt = section[prompt_start:prompt_end].strip()
+                # Remove quotes if present
+                if imagen_prompt.startswith('"') and imagen_prompt.endswith('"'):
+                    imagen_prompt = imagen_prompt[1:-1]
+                
+                if imagen_prompt:
+                    prompts.append({
+                        "screen_name": screen_name,
+                        "imagen_prompt": imagen_prompt,
+                        "index": i
+                    })
+                    logging.info(f"[mockup_prompt_extractor] Extracted prompt for screen: {screen_name}")
+        
+        result = {"prompts": prompts}
+        ctx.session.state["mockup_prompts_list"] = result
+        
+        # Yield success event with proper content format
+        content = genai_types.Content(
+            role="model",
+            parts=[genai_types.Part(text=f"Successfully extracted {len(prompts)} mockup prompts from PRD")]
+        )
+        yield Event(author=self.name, content=content)
 
-    Your task is to analyze the Product Requirements Document (PRD) from the 'product_requirements_doc'
-    state key and extract ALL screen specifications that include Imagen mockup prompts.
 
-    The PRD contains a "Screen Specifications" section (typically Section 5) where each screen has:
-    - Screen name/purpose
-    - User context and purpose
-    - UI components and layout
-    - **Imagen Mockup Prompt**: A detailed prompt for generating the UI mockup
-
-    For each screen specification, extract:
-    1. `screen_name`: The name of the screen (e.g., "Dashboard - Main Interface", "Onboarding - Welcome")
-    2. `imagen_prompt`: The EXACT Imagen mockup prompt text from the PRD (these are typically 120+ words)
-    3. `index`: The order number of the screen in the user journey (starting from 0)
-
-    IMPORTANT:
-    - Extract ALL screens that have Imagen prompts in the PRD
-    - Preserve the exact wording of the Imagen prompts - do NOT modify or summarize them
-    - Maintain the original order of screens as they appear in the PRD
-    - If a screen doesn't have an Imagen prompt, skip it
-
-    Return the extracted prompts as a structured list conforming to the MockupPromptsList schema.
-    """,
-    output_schema=MockupPromptsList,
-    output_key="mockup_prompts_list",
+mockup_prompt_extractor = MockupPromptExtractorAgent(
     before_agent_callback=initialize_mockup_queue_callback,
 )
 

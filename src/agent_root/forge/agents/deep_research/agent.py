@@ -315,9 +315,10 @@ research_evaluator = LlmAgent(
     4. Do NOT fact-check or question the fundamental premise or timeline of the topic.
     5. If suggesting follow-up queries, they should dive deeper into the existing topic, not question its validity.
 
-    Be very critical about the QUALITY of research. If you find significant gaps in depth or coverage, assign a grade of "fail",
-    write a detailed comment about what's missing, and generate 5-7 specific follow-up queries to fill those gaps.
-    If the research thoroughly covers the topic, grade "pass".
+    Be reasonably thorough but pragmatic in your evaluation. The research should be good enough for a startup to make decisions.
+    - If the research covers the key aspects of the topic with decent depth and sources, assign a grade of "pass".
+    - Only assign "fail" if there are critical gaps that would prevent a founder from understanding the market.
+    - If you do suggest follow-up queries (max 3-5), they should address the most important missing pieces.
 
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     Your response must be a single, raw JSON object validating against the 'Feedback' schema.
@@ -384,6 +385,7 @@ research_pipeline = SequentialAgent(
     name="research_pipeline",
     description="Executes a pre-approved research plan. It performs iterative research, evaluation, and composes a final, cited report.",
     sub_agents=[
+        plan_generator,  # Added: generates research_plan
         section_planner, 
         # !! change to make it for business plan instead of research
         section_researcher,
@@ -438,9 +440,7 @@ market_research_agent = LlmAgent(
     model=config.research_config.worker_model,
     description="The market research assistant. Given a user request/description of a company and/or product, it creates a research plan to answer the user's request and then passes control to the `research_pipeline` agent.",
     instruction=market_research_prompt,
-    sub_agents=[research_pipeline],
-    tools=[AgentTool(plan_generator)],
-    
+    tools=[AgentTool(plan_generator), AgentTool(agent=research_pipeline)],
 )
 
 market_research_wrapper = LlmAgent(
@@ -451,11 +451,9 @@ market_research_wrapper = LlmAgent(
     tools=[AgentTool(market_research_agent)],
 )
 
-express_market_research_wrapper = LlmAgent(
-    name="express_market_research_wrapper",
-    model=config.research_config.worker_model,
-    description="Wraps the market research agent to provide a single entry point for market research.",
-    instruction="You are a maket research expert responsible for helping founders create successful companies. Use your knowledge and expertise to generate a market research report based on the user request. ",
-    output_key="final_cited_research_report",
-    after_agent_callback=save_report_callback,
+# Express wrapper that directly calls research_pipeline as a sub-agent (not a tool)
+express_research_wrapper = SequentialAgent(
+    name="express_research_wrapper",
+    description="Express wrapper for market research - directly executes research pipeline.",
+    sub_agents=[research_pipeline],
 )
