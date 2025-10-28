@@ -4,7 +4,16 @@
       "Bash(tree -L 3 /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge)",
       "Bash(mkdir -p src/asset_server)",
       "Bash(cat /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge/utils/asset_services.py)",
-      "Bash(cat /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/README.md)"
+      "Bash(cat /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/README.md)",
+      "Bash(mkdir -p src/agent_root/forge/agents/website_spec_agent)",
+      "Bash(python -m py_compile src/agent_root/forge/agents/website_spec_agent/agent.py)",
+      "Bash(python -m py_compile src/agent_root/forge/agent.py)",
+      "Bash(python -m py_compile src/agent_root/forge/agents/__init__.py)",
+      "Bash(tree -L 3 src/agent_root/forge/agents/website_spec_agent)",
+      "Bash(python -m py_compile src/agent_root/forge/utils/callbacks.py)",
+      "Bash(python -m py_compile src/agent_root/forge/utils/__init__.py)",
+      "Bash(python -m py_compile src/agent_root/forge/agents/deep_research/agent.py)",
+      "Bash(python -m py_compile src/agent_root/forge/agents/ideation_agent/agent.py)"
     ],
     "deny": [],
     "ask": []

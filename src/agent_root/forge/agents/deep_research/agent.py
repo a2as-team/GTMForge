@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 
 from forge.config import config
 from forge.data_models import Assets, ReportAsset
+from forge.utils.callbacks import create_asset_save_callback
 
 
 # --- Structured Output Models ---
@@ -155,56 +156,14 @@ def citation_replacement_callback(
     return genai_types.Content(parts=[genai_types.Part(text=processed_report)])
 
 
-def save_report_callback(callback_context: CallbackContext) -> None:
-    """Saves the final research report to the asset server.
-
-    This callback retrieves the final report with citations from session state,
-    gets the session_id from the invocation context, and saves the report as a
-    markdown file using the Assets model. The asset URL is stored back in state
-    for easy access.
-
-    Args:
-        callback_context (CallbackContext): The context object providing access
-            to the agent's session and state.
-
-    Raises:
-        ValueError: If the final report is not found in state or if saving fails.
-    """
-    # Get the final report with citations from state
-    final_report = callback_context.state.get("final_cited_research_report")
-
-    if not final_report:
-        raise ValueError(
-            "No final report found in state. The 'final_cited_research_report' "
-            "key is missing or empty. Ensure the report_composer agent ran successfully."
-        )
-
-    # Get session_id from invocation context
-    session_id = callback_context._invocation_context.session.id
-
-    # Create an Assets collection with the report
-    # Note: mime_type is now on the ReportAsset itself (defaults to text/markdown)
-    assets = Assets(
-        session_id=session_id,
-        asset_type="reports",
-        items=[ReportAsset(content=final_report, filename="research_report.md")],
-    )
-
-    try:
-        # Save the assets collection
-        saved_files = assets.save()
-
-        if not saved_files:
-            raise ValueError("Assets.save() returned empty list")
-
-        # Store the asset metadata in state for easy retrieval
-        callback_context.state["report_asset_url"] = saved_files[0]["url"]
-        callback_context.state["report_asset_path"] = saved_files[0]["path"]
-        logging.info(f"Report saved successfully to {saved_files[0]['url']}")
-
-    except Exception as e:
-        logging.error(f"Failed to save report: {e}")
-        raise ValueError(f"Failed to save report to asset server: {e}") from e
+# Generate callback using factory to reduce boilerplate
+save_report_callback = create_asset_save_callback(
+    state_key="final_cited_research_report",
+    asset_type="reports",
+    filename="research_report.md",
+    url_state_key="report_asset_url",
+    path_state_key="report_asset_path",
+)
 
 
 # --- Custom Agent for Loop Control ---

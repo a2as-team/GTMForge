@@ -11,6 +11,7 @@ from google.adk import Agent
 from google.adk.agents.callback_context import CallbackContext
 
 from forge.data_models import Assets, ReportAsset
+from forge.utils.callbacks import create_asset_save_callback
 
 # from app.core.base_agent import BaseAgent
 # from app.core.schemas import StartupIdeaInput, IdeationOutput, ICP
@@ -130,56 +131,12 @@ EXECUTIVE_SUMMARY_PARAGRAPH
 """
 
 
-def save_company_brief_callback(callback_context: CallbackContext) -> None:
-    """Saves the GTM company brief to the asset server.
-
-    This callback retrieves the company brief from session state,
-    gets the session_id from the invocation context, and saves the brief as a
-    markdown file using the Assets model. The asset URL is stored back in state
-    for easy access.
-
-    Args:
-        callback_context (CallbackContext): The context object providing access
-            to the agent's session and state.
-
-    Raises:
-        ValueError: If the company brief is not found in state or if saving fails.
-    """
-    # Get the company brief from state
-    company_brief = callback_context.state.get("company_brief")
-
-    if not company_brief:
-        raise ValueError(
-            "No company brief found in state. The 'company_brief' "
-            "key is missing or empty. Ensure the ideation_agent ran successfully."
-        )
-
-    # Get session_id from invocation context
-    session_id = callback_context._invocation_context.session.id
-
-    # Create an Assets collection with the brief
-    # ReportAsset defaults to text/markdown MIME type
-    assets = Assets(
-        session_id=session_id,
-        asset_type="briefs",
-        items=[ReportAsset(content=company_brief, filename="gtm_brief.md")],
-    )
-
-    try:
-        # Save the assets collection
-        saved_files = assets.save()
-
-        if not saved_files:
-            raise ValueError("Assets.save() returned empty list")
-
-        # Store the asset metadata in state for easy retrieval
-        callback_context.state["company_brief_asset_url"] = saved_files[0]["url"]
-        callback_context.state["company_brief_asset_path"] = saved_files[0]["path"]
-        logging.info(f"Company brief saved successfully to {saved_files[0]['url']}")
-
-    except Exception as e:
-        logging.error(f"Failed to save company brief: {e}")
-        raise ValueError(f"Failed to save company brief to asset server: {e}") from e
+# Generate callback using factory to reduce boilerplate
+save_company_brief_callback = create_asset_save_callback(
+    state_key="company_brief",
+    asset_type="briefs",
+    filename="gtm_brief.md",
+)
 
 
 # ADK root_agent for A2A compatibility

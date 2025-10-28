@@ -29,16 +29,18 @@ from google.genai import types as genai_types
 from pydantic import BaseModel, Field
 from .agents.deep_research import market_research_wrapper, express_market_research_wrapper
 from .agents.ideation_agent import ideation_agent
+from .agents.website_spec_agent import website_spec_agent
 from .config import config
 
 
-workflow_root_agent=SequentialAgent(    
+workflow_root_agent=SequentialAgent(
     name="workflow_root_agent",
     description="Executes the end-to-end workflow for building a startup.",
     sub_agents=[
         # market_research_wrapper,
         express_market_research_wrapper,
         ideation_agent,
+        website_spec_agent,
     ],
 )
     
