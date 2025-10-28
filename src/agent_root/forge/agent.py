@@ -41,14 +41,14 @@ from .agents.website_spec_agent import website_spec_agent
 from .agents.video_agent import video_agent
 from .config import config
 
-# parallel_task_agent = ParallelAgent(
-#     name="parallel_design_branch",
-#     description="Runs website specification and mockup generation in parallel.",
-#     sub_agents=[
-#         website_spec_agent,
-#         mockups_agent,
-#     ],
-# )
+parallel_task_agent = ParallelAgent(
+    name="parallel_design_branch",
+    description="Runs mockup generation and video creation in parallel.",
+    sub_agents=[
+        mockups_agent,
+        video_agent,
+    ],
+)
 
 workflow_root_agent = SequentialAgent(
     name="workflow_root_agent",
@@ -58,8 +58,7 @@ workflow_root_agent = SequentialAgent(
         ideation_agent,
         website_spec_agent,
         prd_agent,
-        mockups_agent,
-        video_agent,
+        parallel_task_agent,
     ],
 )
 
