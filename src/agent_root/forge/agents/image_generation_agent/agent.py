@@ -72,9 +72,11 @@ def save_generated_image_callback(
     try:
         # Create a simple object with content field containing binary data
         from types import SimpleNamespace
+
         binary_asset = SimpleNamespace(content=image_binary, filename=filename)
 
         from forge.utils.asset_services import save_assets
+
         saved_files = save_assets(
             session_id=session_id,
             asset_type=asset_type,
@@ -100,11 +102,13 @@ image_generation_agent = Agent(
     description="Generates a single image from a text prompt using gemini-2.5-flash-image model.",
     model=config.image_generation_model,
     instruction="""
-    You are an image generation specialist. Generate a high-quality logo based on the provided company brief.
+    You are an image generation specialist. Generate a high-quality logo on a white background based on the provided company brief.
+
+    **IMPORTANT:** Only generate a logo inspired by the company brief!!
 
     The image prompt will be available in the session state under the 'image_prompt' key.
 
-    Create a professional, visually appealing image that accurately represents the prompt.
+    Create a professional, visually appealing logo that accurately represents the prompt.
     Pay attention to composition, color harmony, style, and overall aesthetic quality.
 
     ## Company Brief:
