@@ -31,7 +31,10 @@
       "Bash(python -m py_compile /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge/agents/website_generator_agent/__init__.py)",
       "Bash(python -m py_compile /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge/agents/website_generator_agent/agent.py)",
       "Bash(python -m py_compile /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge/agent.py)",
-      "Bash(python -m py_compile /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge/agents/mockups_agent/agent.py)"
+      "Bash(python -m py_compile /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge/agents/mockups_agent/agent.py)",
+      "WebFetch(domain:zulko.github.io)",
+      "Bash(python -m py_compile /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge/agents/videogen_agent/__init__.py)",
+      "Bash(python -m py_compile /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge/agents/videogen_agent/agent.py)"
     ],
     "deny": [],
     "ask": []
