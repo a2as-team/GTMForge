@@ -57,39 +57,6 @@ class Feedback(BaseModel):
     )
 
 
-class DeepResearchCoreOutput(BaseModel):
-    """Structured output model for DEEP-RESEARCH-CORE analysis."""
-    
-    idea_summary: str = Field(
-        description="2-3 sentences of what this idea actually is"
-    )
-    primary_problem: str = Field(
-        description="The root pain or inefficiency"
-    )
-    solution_thesis: str = Field(
-        description="What the product does to resolve the problem"
-    )
-    likely_target_user: str = Field(
-        description="The most economically motivated adopter"
-    )
-    market_context: str = Field(
-        description="Forces or realities that make this plausible now"
-    )
-    competitive_angles: str = Field(
-        description="3 bullets: (Alt A / Alt B / Advantage Over Them)"
-    )
-    critical_assumptions: str = Field(
-        description="3-6 assumptions that must hold true"
-    )
-    next_validation_steps: str = Field(
-        description="Actions a founder would take next (not suggestions, imperatives)"
-    )
-    clarification_required: str | None = Field(
-        default=None,
-        description="List of 3-5 missing dimensions that block further inference (only if input is too ambiguous)"
-    )
-
-
 # --- Callbacks ---
 def collect_research_sources_callback(callback_context: CallbackContext) -> None:
     """Collects and organizes web-based research sources and their supported claims from agent events.
@@ -190,12 +157,12 @@ def citation_replacement_callback(
 
 
 # Generate callback using factory to reduce boilerplate
-save_analysis_callback = create_asset_save_callback(
-    state_key="deep_research_core_analysis",
+save_report_callback = create_asset_save_callback(
+    state_key="final_cited_research_report",
     asset_type="reports",
-    filename="deep_research_analysis.json",
-    url_state_key="analysis_asset_url",
-    path_state_key="analysis_asset_path",
+    filename="research_report.md",
+    url_state_key="report_asset_url",
+    path_state_key="report_asset_path",
 )
 
 
@@ -348,10 +315,9 @@ research_evaluator = LlmAgent(
     4. Do NOT fact-check or question the fundamental premise or timeline of the topic.
     5. If suggesting follow-up queries, they should dive deeper into the existing topic, not question its validity.
 
-    Be reasonably thorough but pragmatic in your evaluation. The research should be good enough for a startup to make decisions.
-    - If the research covers the key aspects of the topic with decent depth and sources, assign a grade of "pass".
-    - Only assign "fail" if there are critical gaps that would prevent a founder from understanding the market.
-    - If you do suggest follow-up queries (max 3-5), they should address the most important missing pieces.
+    Be very critical about the QUALITY of research. If you find significant gaps in depth or coverage, assign a grade of "fail",
+    write a detailed comment about what's missing, and generate 5-7 specific follow-up queries to fill those gaps.
+    If the research thoroughly covers the topic, grade "pass".
 
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     Your response must be a single, raw JSON object validating against the 'Feedback' schema.
@@ -385,66 +351,40 @@ enhanced_search_executor = LlmAgent(
 
 report_composer = LlmAgent(
     model=config.research_config.critic_model,
-    name="deep_research_core_analyzer",
+    name="report_composer_with_citations",
     include_contents="none",
-    description="Transforms research data into structured DEEP-RESEARCH-CORE analysis format.",
+    description="Transforms research data and a markdown outline into a final, cited report.",
     instruction="""
-    You are DEEP-RESEARCH-CORE, a backend-grade analysis agent that performs deep structured analysis of startup concepts, product ideas, markets, and problem statements.
-
-    Transform the provided research data into the exact structured format specified below. Return outputs in strictly machine-consumable, deterministic sections.
+    Transform the provided data into a polished, professional, and meticulously cited research report.
 
     ---
     ### INPUT DATA
     *   Research Plan: `{research_plan}`
     *   Research Findings: `{section_research_findings}`
     *   Citation Sources: `{sources}`
+    *   Report Structure: `{report_sections}`
 
     ---
-    ### OUTPUT SPECIFICATION
-    Return the following sections in this exact order:
+    ### CRITICAL: Citation System
+    To cite a source, you MUST insert a special citation tag directly after the claim it supports.
 
-    **Idea_Summary** — 2–3 sentences of what this idea actually is
-
-    **Primary_Problem** — the root pain or inefficiency
-
-    **Solution_Thesis** — what the product does to resolve it
-
-    **Likely_Target_User** — the most economically motivated adopter
-
-    **Market_Context** — forces or realities that make this plausible now
-
-    **Competitive_Angles** — 3 bullets: (Alt A / Alt B / Advantage Over Them)
-
-    **Critical_Assumptions** — 3–6 assumptions that must hold true
-
-    **Next_Validation_Steps** — actions a founder would take next (not suggestions, imperatives)
-    
+    **The only correct format is:** `<cite source="src-ID_NUMBER" />`
 
     ---
-    ### RULES
-    - No rhetorical questions
-    - No "as an AI..." or meta language
-    - No markdown, emojis, or formatting beyond section headers + plain text
-    - Be concise but not vague — this output will be used by other downstream agents
-    - Use research findings to support each section with specific insights
-
-    ---
-    ### FAILURE HANDLING
-    If input is too ambiguous to form Sections 2–8, still emit Idea_Summary and then a final section named:
-    **Clarification_Required** — list the 3–5 missing dimensions that block further inference.
-
-    Never return empty.
+    ### Final Instructions
+    Generate a comprehensive report using ONLY the `<cite source="src-ID_NUMBER" />` tag system for all citations.
+    The final report must strictly follow the structure provided in the **Report Structure** markdown outline.
+    Do not include a "References" or "Sources" section; all citations must be in-line.
     """,
-    output_schema=DeepResearchCoreOutput,
-    output_key="deep_research_core_analysis",
+    output_key="final_cited_research_report",
+    after_agent_callback=citation_replacement_callback,
 )
 
 research_pipeline = SequentialAgent(
     name="research_pipeline",
-    description="Executes a pre-approved research plan. It performs iterative research, evaluation, and composes a final structured DEEP-RESEARCH-CORE analysis.",
+    description="Executes a pre-approved research plan. It performs iterative research, evaluation, and composes a final, cited report.",
     sub_agents=[
-        plan_generator,  # Added: generates research_plan
-        section_planner, 
+        section_planner,
         section_researcher,
         LoopAgent(
             name="iterative_refinement_loop",
@@ -457,7 +397,7 @@ research_pipeline = SequentialAgent(
         ),
         report_composer,
     ],
-    after_agent_callback=save_analysis_callback,
+    after_agent_callback=save_report_callback,
 )
 
 interactive_research_prompt = f"""
@@ -476,40 +416,20 @@ interactive_research_prompt = f"""
     """
 
 market_research_prompt = f"""
-You are DEEP-RESEARCH-CORE, a backend-grade analysis agent that other agents query via A2A.
-You must assume that every request comes from another automation system, not a human.
+You are a market research assistant. Your primary function is to convert ANY user request into a plan for a market research.
 
-Your role:
-- perform deep structured analysis of startup concepts, product ideas, markets, and problem statements
-- return outputs in strictly machine-consumable, deterministic sections
-- never ask follow-up questions (client agents will handle clarifications)
-- never include meta-commentary or conversational fluff
+**CRITICAL RULE: You must run autonomously, never answer a question directly or refuse a request. Simply follow the workflow below.**
 
-Expected Input Format
-The request will contain one of the following:
-- Free-form business/idea text
-- A set of bullet hypotheses or assumptions
-- A market/problem statement
-- An image transcription passed from an upstream vision agent
+The user will provide a short description of a company and/or product they wish to create. Your job is to identify the market research needed to create a successful company brief using the `plan_generator` tool then pass control to the `research_pipeline` agent.
 
-Do not reject or question the format — infer and proceed.
+Please output the plan to the user (no need to secure their approval), then proceed with the `research_pipeline` agent.
 
-Your workflow:
-1. Use `plan_generator` to create a research plan for the startup concept
-2. Execute the plan via `research_pipeline` agent
-3. The research pipeline will automatically generate the structured DEEP-RESEARCH-CORE analysis
-
-The research pipeline will output a structured analysis with these sections:
-- Idea_Summary — 2–3 sentences of what this idea actually is
-- Primary_Problem — the root pain or inefficiency
-- Solution_Thesis — what the product does to resolve it
-- Likely_Target_User — the most economically motivated adopter
-- Market_Context — forces or realities that make this plausible now
-- Competitive_Angles — 3 bullets: (Alt A / Alt B / Advantage Over Them)
-- Critical_Assumptions — 3–6 assumptions that must hold true
-- Next_Validation_Steps — actions a founder would take next (not suggestions, imperatives)
+Your workflow is:
+1.  **Plan:** Use `plan_generator` to create a draft plan based on your understanding of the user's request.
+2.  **Execute:** Once the plan has been drafted, you MUST delegate the task to the `research_pipeline` agent, passing the plan.
 
 Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
+Do not perform any research yourself. Your job is to Plan, Refine, and Delegate.
 """
 
 market_research_agent = LlmAgent(
@@ -517,7 +437,8 @@ market_research_agent = LlmAgent(
     model=config.research_config.worker_model,
     description="The market research assistant. Given a user request/description of a company and/or product, it creates a research plan to answer the user's request and then passes control to the `research_pipeline` agent.",
     instruction=market_research_prompt,
-    tools=[AgentTool(plan_generator), AgentTool(agent=research_pipeline)],
+    sub_agents=[research_pipeline],
+    tools=[AgentTool(plan_generator)],
 )
 
 market_research_wrapper = LlmAgent(
@@ -528,9 +449,11 @@ market_research_wrapper = LlmAgent(
     tools=[AgentTool(market_research_agent)],
 )
 
-# Express wrapper that directly calls research_pipeline as a sub-agent (not a tool)
-express_research_wrapper = SequentialAgent(
-    name="express_research_wrapper",
-    description="Express wrapper for market research - directly executes research pipeline.",
-    sub_agents=[research_pipeline],
+express_market_research_wrapper = LlmAgent(
+    name="express_market_research_wrapper",
+    model=config.research_config.worker_model,
+    description="Wraps the market research agent to provide a single entry point for market research.",
+    instruction="You are a maket research expert responsible for helping founders create successful companies. Use your knowledge and expertise to generate a market research report based on the user request. ",
+    output_key="final_cited_research_report",
+    after_agent_callback=save_report_callback,
 )
