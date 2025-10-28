@@ -126,8 +126,6 @@ EXECUTIVE_SUMMARY_PARAGRAPH
 - 16-24s Solution: SOLUTION_TEXT_AND_NARRATION
 - 24-32s Call to Action: CTA_TEXT_AND_NARRATION
 
-## Market Research Report
-{+final_cited_research_report}+
 """
 
 

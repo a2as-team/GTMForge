@@ -5,32 +5,28 @@ Generates UI mockup images from PRD using gemini-2.5-flash-image model.
 
 from __future__ import annotations
 
-import json
 import logging
-import re
 from typing import Optional
 
 from google.adk.agents import LlmAgent, LoopAgent, SequentialAgent, BaseAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
-from google.genai import types as genai_types
 from collections.abc import AsyncGenerator
 
 from pydantic import BaseModel, Field
 
 from forge.config import config
-from forge.utils.callbacks import create_image_extraction_callback
 
 
 class MockupPrompt(BaseModel):
     """Represents a single UI screen mockup prompt."""
 
     screen_name: str = Field(
-        description="Name of the screen (e.g., 'Dashboard', 'Login')"
+        description="Name of the screen (e.g., 'Dashboard - Main Interface', 'Onboarding - Welcome')"
     )
     imagen_prompt: str = Field(
-        description="Detailed Imagen prompt for generating the mockup"
+        description="Detailed Imagen prompt for generating the mockup (120+ words)"
     )
     index: int = Field(description="Order index of the screen in the user journey")
 
@@ -39,7 +35,8 @@ class MockupPromptsList(BaseModel):
     """Structured list of all mockup prompts to generate."""
 
     prompts: list[MockupPrompt] = Field(
-        default_factory=list, description="List of mockup prompts extracted from PRD"
+        default_factory=list,
+        description="List of mockup prompts extracted from PRD screen specifications"
     )
 
 
@@ -62,21 +59,6 @@ class MockupsManifest(BaseModel):
 
 def initialize_mockup_queue_callback(callback_context: CallbackContext) -> None:
     """Initialize the mockup generation queue from extracted prompts."""
-    # Debug: Check if PRD exists
-    prd = callback_context.state.get("product_requirements_doc")
-    if prd:
-        logging.info(f"[mockups_agent] PRD found, length: {len(prd)} characters")
-        # Check if it contains Imagen prompts
-        if "**Imagen Mockup Prompt**:" in prd:
-            count = prd.count("**Imagen Mockup Prompt**:")
-            logging.info(f"[mockups_agent] Found {count} Imagen Mockup Prompts in PRD")
-        else:
-            logging.warning(
-                "[mockups_agent] No '**Imagen Mockup Prompt**:' found in PRD"
-            )
-    else:
-        logging.warning("[mockups_agent] No PRD found in state")
-
     prompts_payload = callback_context.state.get("mockup_prompts_list")
 
     if not prompts_payload:
@@ -93,7 +75,132 @@ def initialize_mockup_queue_callback(callback_context: CallbackContext) -> None:
 
     callback_context.state["mockup_queue"] = prompts
     callback_context.state["mockup_results"] = []
-    logging.info(f"[mockups_agent] Initialized queue with {len(prompts)} prompts.")
+
+    logging.info(f"[mockups_agent] Initialized queue with {len(prompts)} prompts:")
+    for p in prompts:
+        logging.info(f"  - {p.get('screen_name', 'Unknown')} (prompt length: {len(p.get('imagen_prompt', ''))} chars)")
+
+
+def save_mockup_image_callback(
+    callback_context: CallbackContext, llm_response=None
+) -> None:
+    """Extracts generated mockup image from model response and saves it to asset server."""
+
+    # Step 1: Get current prompt metadata
+    prompt_data = callback_context.state.get("current_mockup_prompt")
+    if not prompt_data:
+        logging.warning(
+            "[mockups_agent] No prompt data found at 'current_mockup_prompt'. Skipping image extraction."
+        )
+        return
+
+    # Step 2: Extract image from model response
+    response = llm_response
+    if not response:
+        logging.error("[mockups_agent] No model response available. Cannot extract image.")
+        return
+
+    image_data = None
+    mime_type = None
+
+    try:
+        # Extract image from inline_data format (gemini-2.5-flash-image)
+        # Use response.content.parts directly (working structure from image_generation_agent)
+        if hasattr(response, "content") and response.content:
+            for part in response.content.parts:
+                if hasattr(part, "inline_data") and part.inline_data:
+                    image_data = part.inline_data.data
+                    mime_type = part.inline_data.mime_type
+                    logging.info("[mockups_agent] Found inline_data in response.content.parts")
+                    break
+
+        if not image_data:
+            logging.error(
+                "[mockups_agent] No image data found in model response. "
+                "Expected inline_data format from gemini-2.5-flash-image."
+            )
+            return
+
+    except Exception as e:
+        logging.error(f"[mockups_agent] Error extracting image from response: {e}")
+        return
+
+    # Step 3: Determine filename
+    screen_name = prompt_data.get("screen_name", "unknown_screen")
+    index = prompt_data.get("index", 0)
+
+    # Sanitize screen name for filename
+    safe_screen_name = "".join(
+        c if c.isalnum() or c in ("-", "_") else "_" for c in screen_name.lower()
+    )
+
+    # Determine file extension from mime_type
+    extension_map = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/jpg": "jpg",
+        "image/webp": "webp",
+    }
+    extension = extension_map.get(mime_type, "png")
+
+    filename = f"{index:02d}_{safe_screen_name}.{extension}"
+
+    # Step 4: Save binary image data
+    session_id = callback_context._invocation_context.session.id
+
+    # inline_data.data is already raw binary bytes (not base64)
+    # Just use it directly (as proven working in image_generation_agent)
+    image_binary = image_data
+
+    try:
+        # Create a simple object with content field containing binary data
+        from types import SimpleNamespace
+        binary_asset = SimpleNamespace(content=image_binary, filename=filename)
+
+        # Save binary directly to asset server
+        from forge.utils.asset_services import save_assets
+        saved_files = save_assets(
+            session_id=session_id,
+            asset_type="mockups",
+            assets=[binary_asset],
+            mime_type=mime_type,
+        )
+
+        if not saved_files:
+            logging.error("[mockups_agent] Failed to save image: save_assets() returned empty list")
+            return
+
+        image_url = saved_files[0]["url"]
+        image_path = saved_files[0]["path"]
+
+        logging.info(
+            f"[mockups_agent] Image saved for '{screen_name}' at {image_url}"
+        )
+
+    except Exception as e:
+        logging.error(f"[mockups_agent] Failed to save image for '{screen_name}': {e}")
+        return
+
+    # Step 5: Create result metadata
+    result = {
+        "screen_name": screen_name,
+        "imagen_prompt": prompt_data.get("imagen_prompt", ""),
+        "image_path": image_path,
+        "image_url": image_url,
+        "index": index,
+    }
+
+    # Step 6: Append to results list
+    results = callback_context.state.get("mockup_results", [])
+    if not isinstance(results, list):
+        results = []
+
+    results.append(result)
+    callback_context.state["mockup_results"] = results
+
+    logging.info(
+        f"[mockups_agent] Added mockup result for '{screen_name}'. Total results: {len(results)}"
+    )
 
 
 class MockupQueueLoader(BaseAgent):
@@ -109,7 +216,9 @@ class MockupQueueLoader(BaseAgent):
         queue: list[dict] = list(state.get("mockup_queue", []))
 
         if not queue:
-            logging.info("[mockups_agent] Queue is empty.")
+            logging.info("[mockup_queue_loader] Queue is empty, clearing current prompt.")
+            # Clear current prompt when queue is empty
+            state.pop("current_mockup_prompt", None)
             yield Event(author=self.name)
             return
 
@@ -118,7 +227,8 @@ class MockupQueueLoader(BaseAgent):
         state["current_mockup_prompt"] = current_prompt
 
         logging.info(
-            f"[mockups_agent] Loaded prompt for '{current_prompt.get('screen_name', 'Unknown')}'. Remaining: {len(queue)}"
+            f"[mockup_queue_loader] Loaded: '{current_prompt.get('screen_name', 'Unknown')}' "
+            f"(Remaining: {len(queue)})"
         )
 
         yield Event(author=self.name)
@@ -135,9 +245,10 @@ class MockupLoopTerminator(BaseAgent):
     ) -> AsyncGenerator[Event, None]:
         state = ctx.session.state
         queue = state.get("mockup_queue", [])
-        current = state.get("current_mockup_prompt")
 
-        if queue or current:
+        # Only check queue - current_mockup_prompt is cleared by loader
+        if queue:
+            logging.debug(f"[mockup_loop_terminator] {len(queue)} prompts remaining, continuing loop.")
             yield Event(author=self.name)
             return
 
@@ -145,108 +256,40 @@ class MockupLoopTerminator(BaseAgent):
         yield Event(author=self.name, actions=EventActions(escalate=True))
 
 
-# Create a simple base agent that just extracts prompts manually
-class MockupPromptExtractorAgent(BaseAgent):
-    """Manually extracts mockup prompts from PRD."""
+# LLM-based prompt extractor (more robust than regex)
+mockup_prompt_extractor = LlmAgent(
+    name="mockup_prompt_extractor",
+    model=config.research_config.worker_model,
+    description="Extracts Imagen mockup prompts from PRD screen specifications.",
+    instruction="""
+    You are a PRD analyzer specializing in extracting UI mockup specifications.
 
-    def __init__(self, **data):
-        super().__init__(
-            name="mockup_prompt_extractor",
-            description="Extracts Imagen mockup prompts from the PRD",
-            **data,
-        )
+    Your task is to analyze the Product Requirements Document (PRD) from the 'product_requirements_doc'
+    state key and extract ALL screen specifications that include Imagen mockup prompts.
 
-    async def _run_async_impl(
-        self, ctx: InvocationContext
-    ) -> AsyncGenerator[Event, None]:
-        # Extract prompts directly from PRD
-        prd = ctx.session.state.get("product_requirements_doc", "")
+    The PRD contains a "Screen Specifications" section (typically Section 5) where each screen has:
+    - Screen name/purpose (e.g., "### Screen 1: Dashboard - Main Interface")
+    - User context and purpose
+    - UI components and layout
+    - **Imagen Mockup Prompt**: A detailed prompt for generating the UI mockup (typically 120+ words)
 
-        if not prd:
-            logging.warning("[mockup_prompt_extractor] No PRD found in state")
-            ctx.session.state["mockup_prompts_list"] = {"prompts": []}
-            yield Event(author=self.name)
-            return
+    For each screen specification, extract:
+    1. `screen_name`: The name/title of the screen exactly as it appears
+    2. `imagen_prompt`: The EXACT text of the Imagen mockup prompt (do NOT modify or summarize)
+    3. `index`: The sequential order number (0 for first screen, 1 for second, etc.)
 
-        logging.info(
-            f"[mockup_prompt_extractor] PRD found, length: {len(prd)} characters"
-        )
+    IMPORTANT:
+    - Extract ALL screens that have Imagen Mockup Prompts
+    - Preserve the exact wording of the prompts - do NOT modify, shorten, or paraphrase
+    - Maintain the original order of screens as they appear in the PRD
+    - If a screen doesn't have an Imagen prompt, skip it
+    - The prompt text is typically after "**Imagen Mockup Prompt**:" and before the next section
 
-        prompts = []
-
-        # Split PRD into sections based on "### Screen" pattern
-        import re
-
-        screen_sections = re.split(r"### Screen \d+:", prd)
-
-        for i, section in enumerate(
-            screen_sections[1:], 0
-        ):  # Skip the first split before any screen
-            # Extract screen name from first line
-            lines = section.strip().split("\n")
-            if not lines:
-                continue
-
-            screen_name = lines[0].strip()
-
-            # Look for Imagen Mockup Prompt
-            if "**Imagen Mockup Prompt**:" in section:
-                # Extract everything after "**Imagen Mockup Prompt**:"
-                prompt_start = section.find("**Imagen Mockup Prompt**:") + len(
-                    "**Imagen Mockup Prompt**:"
-                )
-
-                # Find the end of the prompt (next section or end of content)
-                prompt_end = section.find("\n\n---", prompt_start)
-                if prompt_end == -1:
-                    prompt_end = section.find("\n\n###", prompt_start)
-                if prompt_end == -1:
-                    prompt_end = section.find("\n\n##", prompt_start)
-                if prompt_end == -1:
-                    prompt_end = len(section)
-
-                imagen_prompt = section[prompt_start:prompt_end].strip()
-                # Remove quotes if present
-                if imagen_prompt.startswith('"') and imagen_prompt.endswith('"'):
-                    imagen_prompt = imagen_prompt[1:-1]
-
-                if imagen_prompt:
-                    prompts.append(
-                        {
-                            "screen_name": screen_name,
-                            "imagen_prompt": imagen_prompt,
-                            "index": i,
-                        }
-                    )
-                    logging.info(
-                        f"[mockup_prompt_extractor] Extracted prompt for screen: {screen_name}"
-                    )
-
-        result = {"prompts": prompts}
-        ctx.session.state["mockup_prompts_list"] = result
-
-        # Yield success event with proper content format
-        content = genai_types.Content(
-            role="model",
-            parts=[
-                genai_types.Part(
-                    text=f"Successfully extracted {len(prompts)} mockup prompts from PRD"
-                )
-            ],
-        )
-        yield Event(author=self.name, content=content)
-
-
-mockup_prompt_extractor = MockupPromptExtractorAgent(
-    before_agent_callback=initialize_mockup_queue_callback,
-)
-
-
-# Create the image extraction callback that will save images after generation
-save_mockup_image_callback = create_image_extraction_callback(
-    prompt_state_key="current_mockup_prompt",
-    asset_type="mockups",
-    results_state_key="mockup_results",
+    Return the extracted prompts as a structured list conforming to the MockupPromptsList schema.
+    """,
+    output_schema=MockupPromptsList,
+    output_key="mockup_prompts_list",
+    after_agent_callback=initialize_mockup_queue_callback,
 )
 
 
@@ -257,21 +300,19 @@ mockup_image_generator = LlmAgent(
     instruction="""
     You are a UI mockup generator using Gemini's image generation capabilities.
 
-    The current mockup prompt is stored in the 'current_mockup_prompt' state key, which contains:
-    - screen_name: The name of the screen
-    - imagen_prompt: The detailed Imagen prompt for this screen
-    - index: The order of this screen
+    Generate a high-quality UI mockup image based on the following prompt:
 
-    Your task is to generate a high-quality UI mockup image based on the 'imagen_prompt' field.
+    {current_mockup_prompt[imagen_prompt]}
 
-    Use the detailed prompt to create a realistic, professional UI mockup that accurately represents:
-    - The screen layout and structure
-    - UI components and their arrangement
+    Create a realistic, professional UI mockup that accurately represents:
+    - The screen layout and structure described in the prompt
+    - UI components and their precise arrangement
     - Visual hierarchy and design aesthetic
-    - Color scheme and branding
-    - Realistic data and content
+    - Color scheme and branding elements
+    - Realistic data and content examples
+    - Interaction states and responsive considerations
 
-    The generated image should be suitable for use in product documentation, presentations, and development references.
+    The generated image should be suitable for product documentation, presentations, and development references.
     """,
     after_model_callback=save_mockup_image_callback,
 )

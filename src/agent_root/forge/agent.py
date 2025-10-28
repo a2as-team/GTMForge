@@ -41,20 +41,21 @@ from .agents.ideation_agent import ideation_agent
 from .agents.mockups_agent import mockups_agent
 from .agents.prd_agent import prd_agent
 from .agents.website_spec_agent import website_spec_agent
+from .agents.website_generator_agent import website_generator_agent
 
 # from .agents.video_agent import video_agent
 
 from .agents.image_generation_agent import image_generation_agent
 from .config import config
 
-parallel_task_agent = ParallelAgent(
+parallel_design_agent = ParallelAgent(
     name="parallel_design_branch",
-    description="Runs mockup generation and video creation in parallel.",
+    description="Runs design tasks (mockups, website spec, image generation) in parallel after PRD is generated.",
     sub_agents=[
         mockups_agent,
-        #        video_agent,
+        image_generation_agent,
         website_spec_agent,
-        prd_agent,
+        #        video_agent,
     ],
 )
 
@@ -64,8 +65,9 @@ workflow_root_agent = SequentialAgent(
     sub_agents=[
         express_market_research_wrapper,
         ideation_agent,
-        image_generation_agent,
-        parallel_task_agent,
+        prd_agent,  # Generate PRD first
+        parallel_design_agent,  # Then run parallel design tasks
+        website_generator_agent,
     ],
 )
 
