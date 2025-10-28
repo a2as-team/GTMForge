@@ -35,6 +35,7 @@ Services:
 - **Backend**: `http://localhost:8501` - ADK web server with agent API
 - **Frontend**: `http://localhost:5173` - React UI (Vite dev server)
 - **Asset Server**: `http://localhost:8550` - Browse and serve generated assets
+- **A2A Server**: `http://localhost:8502` - Agent-to-Agent (A2A) endpoint for deep research agent (optional)
 
 ### Testing
 ```bash
@@ -64,11 +65,14 @@ The agent system follows a hierarchical multi-agent architecture defined in `src
 
 #### Research & Analysis
 - **Deep Research Agent** (`deep_research/agent.py`):
+  - **Also known as**: DEEP-RESEARCH-CORE (when exposed via A2A)
   - Implements a sophisticated two-phase workflow
   - Phase 1: Plan & Refine (Human-in-the-Loop)
   - Phase 2: Autonomous Research Execution with iterative refinement
   - Uses Google Search grounding for web-based research
-  - Generates comprehensive cited reports with inline citations
+  - Generates structured DEEP-RESEARCH-CORE analysis format
+  - **A2A Exposure**: Can be exposed as a remote agent for other agents to query (see `deep_research/README_A2A.md`)
+  - Output format: Idea_Summary, Primary_Problem, Solution_Thesis, Likely_Target_User, Market_Context, Competitive_Angles, Critical_Assumptions, Next_Validation_Steps
 
 - **Comparative Insight Agent** (`comparative_insight_agent/agent.py`):
   - Analyzes competitive landscape
@@ -554,6 +558,83 @@ When making significant changes to the codebase, you MUST review and update rele
 - Check ADK logs for event processing details
 - Use `InvocationContext` to inspect agent state
 - Review `adk-expert/knowledge-base/core-concepts/04-runtime.md`
+
+## Agent-to-Agent (A2A) Communication
+
+GTMForge supports the Agent-to-Agent (A2A) protocol, enabling agents to be exposed as remote services that other agents can query.
+
+### DEEP-RESEARCH-CORE A2A Exposure
+
+The Deep Research agent can be exposed via A2A protocol, allowing other automated systems to query it remotely without human intervention.
+
+#### Starting the A2A Server
+
+```bash
+# From project root
+cd src/agent_root
+uvicorn forge.agents.deep_research.a2a_server:a2a_app --host localhost --port 8502 --reload
+```
+
+#### Verifying the Agent
+
+Check the auto-generated agent card:
+```bash
+curl http://localhost:8502/.well-known/agent-card.json
+```
+
+#### Consuming the Agent
+
+From another agent:
+
+```python
+from google.adk.agents.remote_a2a_agent import RemoteA2aAgent, AGENT_CARD_WELL_KNOWN_PATH
+
+research_agent = RemoteA2aAgent(
+    name="deep_research_core",
+    description="Backend-grade analysis agent for startup concepts",
+    agent_card=f"http://localhost:8502{AGENT_CARD_WELL_KNOWN_PATH}"
+)
+
+# Use as a tool in your agent
+from google.adk.tools import AgentTool
+my_agent = LlmAgent(
+    name="my_agent",
+    tools=[AgentTool(research_agent)]
+)
+```
+
+#### Testing the A2A Connection
+
+```bash
+# In a separate terminal
+cd src/agent_root
+python -m forge.agents.deep_research.a2a_client_example
+```
+
+#### A2A Documentation
+
+For complete A2A setup, usage, and troubleshooting:
+- **Full Guide**: `src/agent_root/forge/agents/deep_research/README_A2A.md`
+- **Server Implementation**: `src/agent_root/forge/agents/deep_research/a2a_server.py`
+- **Client Example**: `src/agent_root/forge/agents/deep_research/a2a_client_example.py`
+
+### A2A Benefits
+
+- **Automated Collaboration**: Agents can query other agents without human intervention
+- **Standardized Protocol**: Uses the A2A standard for interoperability
+- **Type-Safe**: Structured inputs and outputs via Pydantic models
+- **Auto-Discovery**: Agent cards describe capabilities and skills
+- **Production-Ready**: Can be deployed with Docker, Cloud Run, or Kubernetes
+
+### Challenge 5 Compliance
+
+The A2A implementation satisfies all requirements for Challenge 5 (The Ambassador):
+- ✅ Uses `google.adk.a2a.utils.agent_to_a2a.to_a2a()` to expose the agent
+- ✅ Launches server on configurable local port (8502)
+- ✅ Agent card accessible at `.well-known/agent-card.json`
+- ✅ Client can connect and send prompts via `RemoteA2aAgent`
+- ✅ Returns valid, coherent, structured responses
+- ✅ End-to-end A2A communication proven working
 
 ---
 
