@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree -L 3 /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge)",
+      "Bash(mkdir -p src/asset_server)",
+      "Bash(cat /Users/luissala/development/agent-bakeoff-projects/ep3/GTMForge/src/agent_root/forge/utils/asset_services.py)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

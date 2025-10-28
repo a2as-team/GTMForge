@@ -27,18 +27,25 @@ from google.adk.tools import google_search
 from google.adk.tools.agent_tool import AgentTool
 from google.genai import types as genai_types
 from pydantic import BaseModel, Field
-from .agents.deep_research import root_agent as deep_research_agent
+from .agents.deep_research import market_research_wrapper
+from .agents.ideation_agent import ideation_agent
 from .config import config
 
+
+workflow_root_agent=SequentialAgent(    
+    name="workflow_root_agent",
+    description="Executes the end-to-end workflow for building a startup.",
+    sub_agents=[
+        market_research_wrapper,
+        ideation_agent,
+    ],
+)
+    
 
 root_agent = LlmAgent(
     name="forge",
     description="The main agent for GTM Forge.",
     model=config.research_config.worker_model,
     instruction=config.prompts_config.persona,
-    tools=[
-        AgentTool(
-            agent=deep_research_agent,
-        ),
-    ],
+    sub_agents=[workflow_root_agent],
 )

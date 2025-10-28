@@ -1,6 +1,7 @@
 """Ideation Agent package"""
 
-from .agent import IdeationAgent, root_agent
+from .agent import ideation_agent
+root_agent=ideation_agent
 
-__all__ = ["IdeationAgent", "root_agent"]
+__all__ = ["root_agent", "ideation_agent"]
 

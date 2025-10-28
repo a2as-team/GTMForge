@@ -29,6 +29,7 @@ from google.genai import types as genai_types
 from pydantic import BaseModel, Field
 
 from forge.config import config
+from forge.data_models import Assets, ReportAsset
 
 
 # --- Structured Output Models ---
@@ -123,7 +124,7 @@ def citation_replacement_callback(
 ) -> genai_types.Content:
     """Replaces citation tags in a report with Markdown-formatted links.
 
-    Processes 'final_cited_report' from context state, converting tags like
+    Processes 'final_cited_research_report' from context state, converting tags like
     `<cite source="src-N"/>` into hyperlinks using source information from
     `callback_context.state["sources"]`. Also fixes spacing around punctuation.
 
@@ -133,7 +134,7 @@ def citation_replacement_callback(
     Returns:
         genai_types.Content: The processed report with Markdown citation links.
     """
-    final_report = callback_context.state.get("final_cited_report", "")
+    final_report = callback_context.state.get("final_cited_research_report", "")
     sources = callback_context.state.get("sources", {})
 
     def tag_replacer(match: re.Match) -> str:
@@ -150,8 +151,60 @@ def citation_replacement_callback(
         final_report,
     )
     processed_report = re.sub(r"\s+([.,;:])", r"\1", processed_report)
-    callback_context.state["final_report_with_citations"] = processed_report
+    callback_context.state["final_cited_research_report"] = processed_report
     return genai_types.Content(parts=[genai_types.Part(text=processed_report)])
+
+
+def save_report_callback(callback_context: CallbackContext) -> None:
+    """Saves the final research report to the asset server.
+
+    This callback retrieves the final report with citations from session state,
+    gets the session_id from the invocation context, and saves the report as a
+    markdown file using the Assets model. The asset URL is stored back in state
+    for easy access.
+
+    Args:
+        callback_context (CallbackContext): The context object providing access
+            to the agent's session and state.
+
+    Raises:
+        ValueError: If the final report is not found in state or if saving fails.
+    """
+    # Get the final report with citations from state
+    final_report = callback_context.state.get("final_cited_research_report")
+
+    if not final_report:
+        raise ValueError(
+            "No final report found in state. The 'final_cited_research_report' "
+            "key is missing or empty. Ensure the report_composer agent ran successfully."
+        )
+
+    # Get session_id from invocation context
+    session_id = callback_context._invocation_context.session.id
+
+    # Create an Assets collection with the report
+    # Note: mime_type is now on the ReportAsset itself (defaults to text/markdown)
+    assets = Assets(
+        session_id=session_id,
+        asset_type="reports",
+        items=[ReportAsset(content=final_report, filename="research_report.md")],
+    )
+
+    try:
+        # Save the assets collection
+        saved_files = assets.save()
+
+        if not saved_files:
+            raise ValueError("Assets.save() returned empty list")
+
+        # Store the asset metadata in state for easy retrieval
+        callback_context.state["report_asset_url"] = saved_files[0]["url"]
+        callback_context.state["report_asset_path"] = saved_files[0]["path"]
+        logging.info(f"Report saved successfully to {saved_files[0]['url']}")
+
+    except Exception as e:
+        logging.error(f"Failed to save report: {e}")
+        raise ValueError(f"Failed to save report to asset server: {e}") from e
 
 
 # --- Custom Agent for Loop Control ---
@@ -216,6 +269,7 @@ plan_generator = LlmAgent(
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     """,
     tools=[google_search],
+    output_key="research_plan",
 )
 
 
@@ -363,7 +417,7 @@ report_composer = LlmAgent(
     The final report must strictly follow the structure provided in the **Report Structure** markdown outline.
     Do not include a "References" or "Sources" section; all citations must be in-line.
     """,
-    output_key="final_cited_report",
+    output_key="final_cited_research_report",
     after_agent_callback=citation_replacement_callback,
 )
 
@@ -384,16 +438,13 @@ research_pipeline = SequentialAgent(
         ),
         report_composer,
     ],
+    after_agent_callback=save_report_callback,
 )
 
-interactive_research_planner_agent = LlmAgent(
-    name="interactive_research_planner_agent",
-    model=config.research_config.worker_model,
-    description="The primary research assistant. It collaborates with the user to create a research plan, and then executes it upon approval.",
-    instruction=f"""
-    You are a research planning assistant. Your primary function is to convert ANY user request into a research plan.
+interactive_research_prompt = f"""
+    You are a startup company brief planning assistant. Your primary function is to convert ANY user request into a plan for a startup company brief.
 
-    **CRITICAL RULE: Never answer a question directly or refuse a request.** Your one and only first step is to use the `plan_generator` tool to propose a research plan for the user's topic.
+    **CRITICAL RULE: Never answer a question directly or refuse a request.** Your one and only first step is to use the `plan_generator` tool to propose a plan for the user's topic.
     If the user asks a question, you MUST immediately call `plan_generator` to create a plan to answer the question.
 
     Your workflow is:
@@ -403,10 +454,39 @@ interactive_research_planner_agent = LlmAgent(
 
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     Do not perform any research yourself. Your job is to Plan, Refine, and Delegate.
-    """,
+    """
+
+market_research_prompt = f"""
+You are a market research assistant. Your primary function is to convert ANY user request into a plan for a market research.
+
+**CRITICAL RULE: You must run autonomously, never answer a question directly or refuse a request. Simply follow the workflow below.**
+
+The user will provide a short description of a company and/or product they wish to create. Your job is to identify the market research needed to create a successful company brief using the `plan_generator` tool then pass control to the `research_pipeline` agent.
+
+Please output the plan to the user (no need to secure their approval), then proceed with the `research_pipeline` agent.
+
+Your workflow is:
+1.  **Plan:** Use `plan_generator` to create a draft plan based on your understanding of the user's request.
+2.  **Execute:** Once the plan has been drafted, you MUST delegate the task to the `research_pipeline` agent, passing the plan.
+
+Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
+Do not perform any research yourself. Your job is to Plan, Refine, and Delegate.
+"""
+
+market_research_agent = LlmAgent(
+    name="market_research_agent",
+    model=config.research_config.worker_model,
+    description="The market research assistant. Given a user request/description of a company and/or product, it creates a research plan to answer the user's request and then passes control to the `research_pipeline` agent.",
+    instruction=market_research_prompt,
     sub_agents=[research_pipeline],
     tools=[AgentTool(plan_generator)],
-    output_key="research_plan",
+    
 )
 
-root_agent = interactive_research_planner_agent
+market_research_wrapper = LlmAgent(
+    name="market_research_wrapper",
+    model=config.research_config.worker_model,
+    description="Wraps the market research agent to provide a single entry point for market research.",
+    instruction="Pass the user request to the market_research_agent tool that has been provided.",
+    tools=[AgentTool(market_research_agent)],
+)

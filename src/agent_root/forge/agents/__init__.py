@@ -12,17 +12,8 @@ Contains all specialized agents for the GTMForge pipeline.
 # from forge.agents.veo_agent.agent import VeoAgent
 # from forge.agents.canva_agent.agent import CanvaAgent
 # from forge.agents.publisher_agent.agent import PublisherAgent
-from forge.agents.deep_research.agent import root_agent as deep_research_agent
+from forge.agents.ideation_agent.agent import ideation_agent
 
-__all__ = [
-    # "IdeationAgent",
-    # "ComparativeInsightAgent",
-    # "PitchWriterAgent",
-    # "PromptForgeAgent",
-    # "QAAgent",
-    # "ImagenAgent",
-    # "VeoAgent",
-    # "CanvaAgent",
-    # "PublisherAgent",
-    "deep_research_agent",
-]
+root_agent=ideation_agent
+
+__all__=["root_agent","ideation_agent"]

@@ -8,117 +8,128 @@ from pydantic import BaseModel
 
 from google.adk import Agent
 
-from app.core.base_agent import BaseAgent
-from app.core.schemas import StartupIdeaInput, IdeationOutput, ICP
+# from app.core.base_agent import BaseAgent
+# from app.core.schemas import StartupIdeaInput, IdeationOutput, ICP
 
+ideation_prompt = """
+You are the Ideation Agent. Expand the user’s startup idea into a comprehensive go-to-market brief for downstream specialized agents. A market research report is available.
 
-class IdeationAgent(BaseAgent):
-    """
-    Ideation Agent expands a raw startup idea into structured components:
-    - Ideal Customer Profiles (ICPs)
-    - Key pain points being addressed
-    - Market context and opportunity
-    - Value proposition
-    - Unique differentiators
-    
-    This is the first agent in the GTMForge pipeline, transforming user input
-    into structured data for downstream agents.
-    
-    Phase 1: Returns mock data structure
-    Phase 2: Will integrate with Gemini 2.0 for actual ideation
-    """
-    
-    def __init__(self):
-        super().__init__(
-            name="IdeationAgent",
-            description="Expands startup ideas into ICPs, pain points, and market context",
-            version="1.0.0"
-        )
-    
-    @property
-    def input_schema(self) -> Type[BaseModel]:
-        return StartupIdeaInput
-    
-    @property
-    def output_schema(self) -> Type[BaseModel]:
-        return IdeationOutput
-    
-    async def run(self, input_data: StartupIdeaInput) -> IdeationOutput:
-        """
-        Execute ideation analysis on the startup idea.
-        
-        Args:
-            input_data: User's startup idea with optional context
-            
-        Returns:
-            Structured ideation output with ICPs, pain points, and context
-        """
-        self.logger.info(
-            "ideation_started",
-            idea_preview=input_data.idea[:100],
-            industry=input_data.industry
-        )
-        
-        # TODO Phase 2: Integrate Gemini 2.0 API for actual ideation
-        # TODO: Use research.mcp for market context gathering
-        # TODO: Apply prompt templates from /prompts directory
-        
-        # Phase 1: Return structured mock data
-        output = IdeationOutput(
-            expanded_idea=f"Enhanced version of: {input_data.idea}. "
-                         f"This platform leverages AI and modern technology to solve critical "
-                         f"challenges in the {input_data.industry or 'target'} industry.",
-            icps=[
-                ICP(
-                    segment_name="Primary Customer Segment",
-                    demographics="Target demographic profile based on industry analysis",
-                    pain_points=[
-                        "Primary pain point identified from idea",
-                        "Secondary pain point affecting segment",
-                        "Tertiary operational challenge"
-                    ],
-                    behaviors="Technology adoption patterns and decision-making processes"
-                )
-            ],
-            key_pain_points=[
-                f"Core problem in {input_data.industry or 'the market'}",
-                "Inefficiency in current solutions",
-                "Gap in market offerings"
-            ],
-            market_context=f"The {input_data.industry or 'target'} market is experiencing "
-                          f"significant transformation. Key trends include digital adoption, "
-                          f"changing customer expectations, and increased competition.",
-            value_proposition=f"Unique solution addressing {input_data.idea}",
-            unique_differentiators=[
-                "AI-powered automation",
-                "Modern technology stack",
-                "Superior user experience"
-            ]
-        )
-        
-        self.logger.info(
-            "ideation_completed",
-            icps_generated=len(output.icps),
-            pain_points_identified=len(output.key_pain_points),
-            differentiators=len(output.unique_differentiators)
-        )
-        
-        return output
+INPUT FIELDS
+1. idea (string, required): raw description of the startup concept.
+2. industry (string, optional): target market or sector.
 
+TASKS
+- Craft an “executive_summary” paragraph that enhances the user’s idea, highlights AI and modern technology leverage, and frames the opportunity within the specified industry (or “target” if none provided).
+- Produce a single Ideal Customer Profile (ICP) that includes:
+  • segment_name: “Primary Customer Segment”
+  • demographics: “Target demographic profile based on industry analysis”
+  • behaviors: “Technology adoption patterns and decision-making processes”
+  • pain_points: three bullet points covering primary, secondary, and tertiary challenges.
+- Capture “key_pain_points” as three items: the first tailored to the provided industry (or “the market” if none), followed by “Inefficiency in current solutions” and “Gap in market offerings”.
+- Summarize “market_context” in two sentences about transformation, digital adoption, changing expectations, and increased competition, tailored to the industry if available.
+- Define “value_proposition” as “Unique solution addressing {idea}”.
+- List “unique_differentiators” as: “AI-powered automation”, “Modern technology stack”, “Superior user experience”.
+- For marketing copy generation, supply a “messaging_foundation” section containing:
+  • brand_voice: tone guidance
+  • hero_tagline: 6-12 word headline
+  • supporting_copy: two bullet points for key benefits
+  • calls_to_action: two CTA phrases.
+- For investor pitch enablement, provide an “investor_pitch_outline” with bullet points covering: problem, solution, market size, business model, traction/roadmap, competitive moat, and go-to-market strategy.
+- For PRD/product spec, create a “product_brief” section detailing:
+  • product_vision: 2-3 sentences describing end-state impact
+  • primary_use_cases: three bullet points
+  • core_features: three feature bullets with one-line descriptions
+  • ux_requirements: two bullet points on UX/UI expectations.
+- For website production, add a “web_page_framework” section defining:
+  • hero_section: hero copy summary and CTA
+  • key_sections: bullet list of three site sections with purpose statements
+  • social_proof: suggestion for testimonials or logos.
+- For promo video creation, include a “promo_video_script” with:
+  • hook (0-3s)
+  • problem statement (3-6s)
+  • solution reveal (6-10s)
+  • call to action (10-15s)
+  Each beat should have on-screen text and narration guidance.
+
+OUTPUT FORMAT (MARKDOWN):
+# GTM Brief
+
+## Executive Summary
+{executive_summary paragraph}
+
+## Ideal Customer Profile
+- **Segment Name:** Primary Customer Segment
+- **Demographics:** Target demographic profile based on industry analysis
+- **Behaviors:** Technology adoption patterns and decision-making processes
+- **Pain Points:**
+  1. {primary pain point}
+  2. Inefficiency in current solutions
+  3. Gap in market offerings
+
+## Market Context & Positioning
+- **Market Context:** {two sentences}
+- **Value Proposition:** Unique solution addressing {idea}
+- **Unique Differentiators:**
+  1. AI-powered automation
+  2. Modern technology stack
+  3. Superior user experience
+
+## Messaging Foundation
+- **Brand Voice:** {brand_voice}
+- **Hero Tagline:** {hero_tagline}
+- **Supporting Copy:**
+  - {supporting_copy bullet 1}
+  - {supporting_copy bullet 2}
+- **Calls to Action:**
+  - {cta 1}
+  - {cta 2}
+
+## Investor Pitch Outline
+- Problem: {bullet}
+- Solution: {bullet}
+- Market Size: {bullet}
+- Business Model: {bullet}
+- Traction & Roadmap: {bullet}
+- Competitive Moat: {bullet}
+- Go-To-Market Strategy: {bullet}
+
+## Product Brief (PRD Seed)
+- **Product Vision:** {product_vision}
+- **Primary Use Cases:**
+  - {use case 1}
+  - {use case 2}
+  - {use case 3}
+- **Core Features:**
+  - {feature 1 with description}
+  - {feature 2 with description}
+  - {feature 3 with description}
+- **UX Requirements:**
+  - {ux requirement 1}
+  - {ux requirement 2}
+
+## Web Page Framework
+- **Hero Section:** {hero_section summary}
+- **Key Sections:**
+  - {section 1}: {purpose}
+  - {section 2}: {purpose}
+  - {section 3}: {purpose}
+- **Social Proof:** {social_proof recommendation}
+
+## Promo Video Script (15 Seconds)
+- 0-3s Hook: {hook text & narration}
+- 3-6s Problem: {problem text & narration}
+- 6-10s Solution: {solution text & narration}
+- 10-15s Call to Action: {cta text & narration}
+
+## Market Research Report
+{final_cited_research_report}
+"""
 
 # ADK root_agent for A2A compatibility
-root_agent = Agent(
+ideation_agent = Agent(
     name="ideation_agent",
     description="Expands startup ideas into ICPs, pain points, and market context",
-    instruction="""
-    You are the Ideation Agent. Your role is to expand raw startup ideas into structured components:
-    - Identify and profile Ideal Customer Profiles (ICPs)
-    - Extract and articulate key pain points
-    - Analyze market context and opportunity
-    - Define value proposition
-    - Identify unique differentiators
-    
-    Take the user's input idea and transform it into a comprehensive, structured analysis.
-    """,
+    instruction=ideation_prompt,
+    output_key="company_brief",
 )
 
