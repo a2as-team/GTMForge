@@ -25,12 +25,16 @@ npm --prefix src/frontend install  # Install frontend dependencies only
 
 ### Running the Application
 ```bash
-make dev             # Run both backend and frontend concurrently
-make dev-backend     # Run backend only (ADK web server on port 8501)
-make dev-frontend    # Run frontend only (Vite dev server on port 5173)
+make dev                # Run both backend and frontend concurrently
+make dev-backend        # Run backend only (ADK web server on port 8501)
+make dev-frontend       # Run frontend only (Vite dev server on port 5173)
+make dev-asset-server   # Run asset server only (FastAPI on port 8550)
 ```
 
-The backend is served at `http://localhost:8501` and frontend at `http://localhost:5173`.
+Services:
+- **Backend**: `http://localhost:8501` - ADK web server with agent API
+- **Frontend**: `http://localhost:5173` - React UI (Vite dev server)
+- **Asset Server**: `http://localhost:8550` - Browse and serve generated assets
 
 ### Testing
 ```bash
@@ -121,6 +125,11 @@ The agent system follows a hierarchical multi-agent architecture defined in `src
 - **State Management**: Uses `callback_context.state` and `session.state` to pass data between agents
 - **Structured Outputs**: Pydantic models for type-safe data exchange between agents
 - **Callbacks**: Custom callbacks like `collect_research_sources_callback` handle citation tracking and source aggregation
+- **Asset Management**: Automated asset saving using `after_agent_callback` to persist agent outputs
+  - `Assets` model for organizing files by session and type
+  - Asset server (`http://localhost:8550`) for browsing and serving saved files
+  - Supports mixed MIME types (markdown, images, videos, etc.)
+  - See `docs/asset-saving-guide.md` for complete documentation
 - **Grounding Metadata**: Deep Research agent extracts source URLs and titles from Gemini's grounding chunks
 - **Agent Tools**: Agents expose themselves as tools using `AgentTool` for delegation
 
@@ -155,24 +164,32 @@ GTMForge/
 │   ├── agent_root/forge/       # Backend agent code
 │   │   ├── agent.py            # Root "forge" agent entry point
 │   │   ├── config.py           # Configuration and settings
-│   │   └── agents/             # Specialized agent implementations
-│   │       ├── deep_research/       # Research agent
-│   │       ├── ideation_agent/      # ICP and market analysis
-│   │       ├── comparative_insight_agent/  # Competitive analysis
-│   │       ├── pitch_writer_agent/  # Pitch creation
-│   │       ├── prompt_forge_agent/  # Prompt optimization
-│   │       ├── imagen_agent/        # Image generation
-│   │       ├── veo_agent/           # Video generation
-│   │       ├── canva_agent/         # Design automation
-│   │       ├── publisher_agent/     # Content distribution
-│   │       └── qa_agent/            # Quality assurance
+│   │   ├── data_models.py      # Pydantic models for assets
+│   │   ├── agents/             # Specialized agent implementations
+│   │   │   ├── deep_research/       # Research agent with callbacks
+│   │   │   ├── ideation_agent/      # ICP and market analysis
+│   │   │   ├── comparative_insight_agent/  # Competitive analysis
+│   │   │   ├── pitch_writer_agent/  # Pitch creation
+│   │   │   ├── prompt_forge_agent/  # Prompt optimization
+│   │   │   ├── imagen_agent/        # Image generation
+│   │   │   ├── veo_agent/           # Video generation
+│   │   │   ├── canva_agent/         # Design automation
+│   │   │   ├── publisher_agent/     # Content distribution
+│   │   │   └── qa_agent/            # Quality assurance
+│   │   └── utils/              # Utility modules
+│   │       └── asset_services.py    # Asset saving utilities
+│   ├── asset_server/           # FastAPI asset server
+│   │   ├── server.py           # Asset browsing and serving
+│   │   └── README.md           # Asset server documentation
 │   └── frontend/               # React frontend application
+├── asset_server_root/          # Saved assets (organized by session)
 ├── prompts/
 │   └── forge/
 │       └── persona.md          # GTM expert persona definition
+├── docs/                       # Project documentation
+│   └── asset-saving-guide.md   # Asset management best practices
 ├── adk-expert/                 # ADK knowledge base (see below)
 ├── archive/                    # Archived/deprecated code
-├── docs/                       # Project documentation
 ├── pyproject.toml              # Python dependencies (uv)
 ├── Makefile                    # Development commands
 └── .env                        # Environment variables (not in version control)
@@ -473,6 +490,42 @@ Typical GTMForge workflow:
 Each agent can be invoked independently or as part of a coordinated workflow.
 
 ## Development Tips
+
+### Documentation Maintenance
+
+**CRITICAL: Always update documentation after major changes**
+
+When making significant changes to the codebase, you MUST review and update relevant documentation:
+
+1. **After adding new features or systems:**
+   - Create or update documentation in `docs/`
+   - Include usage examples, API reference, and best practices
+   - Update this `AGENTS.md` file if architecture changes
+
+2. **After modifying existing systems:**
+   - Update relevant docs in `docs/` to reflect changes
+   - Ensure examples remain accurate
+   - Update any affected guides or tutorials
+
+3. **Documentation checklist:**
+   - [ ] Created/updated relevant documentation files
+   - [ ] Included code examples demonstrating new features
+   - [ ] Documented API/function signatures and parameters
+   - [ ] Added best practices and common pitfalls
+   - [ ] Updated architecture diagrams if applicable
+   - [ ] Reviewed for clarity and completeness
+
+4. **Where to document:**
+   - **New systems/features**: Create new file in `docs/` (e.g., `docs/feature-name-guide.md`)
+   - **Agent changes**: Update `AGENTS.md` agent descriptions
+   - **API changes**: Update inline documentation and docstrings
+   - **Architecture changes**: Update relevant sections in `AGENTS.md`
+   - **Configuration changes**: Update `config.py` docstrings and `AGENTS.md`
+
+**Example Documentation Files:**
+- `docs/asset-saving-guide.md` - Comprehensive guide on asset management system
+- `src/asset_server/README.md` - Asset server usage and API
+- Agent-specific READMEs in agent directories
 
 ### Working with ADK
 - **Start with official examples**: The `marketing-agency` example in `adk-expert/repositories/adk-samples/python/agents/` is particularly relevant to GTMForge

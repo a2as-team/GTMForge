@@ -490,3 +490,12 @@ market_research_wrapper = LlmAgent(
     instruction="Pass the user request to the market_research_agent tool that has been provided.",
     tools=[AgentTool(market_research_agent)],
 )
+
+express_market_research_wrapper = LlmAgent(
+    name="express_market_research_wrapper",
+    model=config.research_config.worker_model,
+    description="Wraps the market research agent to provide a single entry point for market research.",
+    instruction="You are a maket research expert responsible for helping founders create successful companies. Use your knowledge and expertise to generate a market research report based on the user request. ",
+    output_key="final_cited_research_report",
+    after_agent_callback=save_report_callback,
+)

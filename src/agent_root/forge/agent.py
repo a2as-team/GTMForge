@@ -27,7 +27,7 @@ from google.adk.tools import google_search
 from google.adk.tools.agent_tool import AgentTool
 from google.genai import types as genai_types
 from pydantic import BaseModel, Field
-from .agents.deep_research import market_research_wrapper
+from .agents.deep_research import market_research_wrapper, express_market_research_wrapper
 from .agents.ideation_agent import ideation_agent
 from .config import config
 
@@ -36,7 +36,8 @@ workflow_root_agent=SequentialAgent(
     name="workflow_root_agent",
     description="Executes the end-to-end workflow for building a startup.",
     sub_agents=[
-        market_research_wrapper,
+        # market_research_wrapper,
+        express_market_research_wrapper,
         ideation_agent,
     ],
 )

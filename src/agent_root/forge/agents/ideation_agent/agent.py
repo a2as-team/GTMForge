@@ -3,10 +3,14 @@ Ideation Agent
 Expands user input into structured ICPs, pain points, and market context.
 """
 
+import logging
 from typing import Type
 from pydantic import BaseModel
 
 from google.adk import Agent
+from google.adk.agents.callback_context import CallbackContext
+
+from forge.data_models import Assets, ReportAsset
 
 # from app.core.base_agent import BaseAgent
 # from app.core.schemas import StartupIdeaInput, IdeationOutput, ICP
@@ -27,7 +31,7 @@ TASKS
   • pain_points: three bullet points covering primary, secondary, and tertiary challenges.
 - Capture “key_pain_points” as three items: the first tailored to the provided industry (or “the market” if none), followed by “Inefficiency in current solutions” and “Gap in market offerings”.
 - Summarize “market_context” in two sentences about transformation, digital adoption, changing expectations, and increased competition, tailored to the industry if available.
-- Define “value_proposition” as “Unique solution addressing {idea}”.
+- Define “value_proposition” as “Unique solution addressing IDEA”.
 - List “unique_differentiators” as: “AI-powered automation”, “Modern technology stack”, “Superior user experience”.
 - For marketing copy generation, supply a “messaging_foundation” section containing:
   • brand_voice: tone guidance
@@ -55,75 +59,128 @@ OUTPUT FORMAT (MARKDOWN):
 # GTM Brief
 
 ## Executive Summary
-{executive_summary paragraph}
+EXECUTIVE_SUMMARY_PARAGRAPH
 
 ## Ideal Customer Profile
 - **Segment Name:** Primary Customer Segment
 - **Demographics:** Target demographic profile based on industry analysis
 - **Behaviors:** Technology adoption patterns and decision-making processes
 - **Pain Points:**
-  1. {primary pain point}
+  1. PRIMARY_PAIN_POINT
   2. Inefficiency in current solutions
   3. Gap in market offerings
 
 ## Market Context & Positioning
-- **Market Context:** {two sentences}
-- **Value Proposition:** Unique solution addressing {idea}
+- **Market Context:** TWO_SENTENCES
+- **Value Proposition:** Unique solution addressing IDEA
 - **Unique Differentiators:**
   1. AI-powered automation
   2. Modern technology stack
   3. Superior user experience
 
 ## Messaging Foundation
-- **Brand Voice:** {brand_voice}
-- **Hero Tagline:** {hero_tagline}
+- **Brand Voice:** BRAND_VOICE
+- **Hero Tagline:** HERO_TAGLINE
 - **Supporting Copy:**
-  - {supporting_copy bullet 1}
-  - {supporting_copy bullet 2}
+  - SUPPORTING_COPY_BULLET_1
+  - SUPPORTING_COPY_BULLET_2
 - **Calls to Action:**
-  - {cta 1}
-  - {cta 2}
+  - CTA_1
+  - CTA_2
 
 ## Investor Pitch Outline
-- Problem: {bullet}
-- Solution: {bullet}
-- Market Size: {bullet}
-- Business Model: {bullet}
-- Traction & Roadmap: {bullet}
-- Competitive Moat: {bullet}
-- Go-To-Market Strategy: {bullet}
+- Problem: PROBLEM_BULLET
+- Solution: SOLUTION_BULLET
+- Market Size: MARKET_SIZE_BULLET
+- Business Model: BUSINESS_MODEL_BULLET
+- Traction & Roadmap: TRACTION_ROADMAP_BULLET
+- Competitive Moat: COMPETITIVE_MOAT_BULLET
+- Go-To-Market Strategy: GO_TO_MARKET_STRATEGY_BULLET
 
 ## Product Brief (PRD Seed)
-- **Product Vision:** {product_vision}
+- **Product Vision:** PRODUCT_VISION
 - **Primary Use Cases:**
-  - {use case 1}
-  - {use case 2}
-  - {use case 3}
+  - USE_CASE_1
+  - USE_CASE_2
+  - USE_CASE_3
 - **Core Features:**
-  - {feature 1 with description}
-  - {feature 2 with description}
-  - {feature 3 with description}
+  - FEATURE_1_WITH_DESCRIPTION
+  - FEATURE_2_WITH_DESCRIPTION
+  - FEATURE_3_WITH_DESCRIPTION
 - **UX Requirements:**
-  - {ux requirement 1}
-  - {ux requirement 2}
+  - UX_REQUIREMENT_1
+  - UX_REQUIREMENT_2
 
 ## Web Page Framework
-- **Hero Section:** {hero_section summary}
+- **Hero Section:** HERO_SECTION_SUMMARY
 - **Key Sections:**
-  - {section 1}: {purpose}
-  - {section 2}: {purpose}
-  - {section 3}: {purpose}
-- **Social Proof:** {social_proof recommendation}
+  - SECTION_1: PURPOSE_1
+  - SECTION_2: PURPOSE_2
+  - SECTION_3: PURPOSE_3
+- **Social Proof:** SOCIAL_PROOF_RECOMMENDATION
 
 ## Promo Video Script (15 Seconds)
-- 0-3s Hook: {hook text & narration}
-- 3-6s Problem: {problem text & narration}
-- 6-10s Solution: {solution text & narration}
-- 10-15s Call to Action: {cta text & narration}
+- 0-3s Hook: HOOK_TEXT_AND_NARRATION
+- 3-6s Problem: PROBLEM_TEXT_AND_NARRATION
+- 6-10s Solution: SOLUTION_TEXT_AND_NARRATION
+- 10-15s Call to Action: CTA_TEXT_AND_NARRATION
 
 ## Market Research Report
 {final_cited_research_report}
 """
+
+
+def save_company_brief_callback(callback_context: CallbackContext) -> None:
+    """Saves the GTM company brief to the asset server.
+
+    This callback retrieves the company brief from session state,
+    gets the session_id from the invocation context, and saves the brief as a
+    markdown file using the Assets model. The asset URL is stored back in state
+    for easy access.
+
+    Args:
+        callback_context (CallbackContext): The context object providing access
+            to the agent's session and state.
+
+    Raises:
+        ValueError: If the company brief is not found in state or if saving fails.
+    """
+    # Get the company brief from state
+    company_brief = callback_context.state.get("company_brief")
+
+    if not company_brief:
+        raise ValueError(
+            "No company brief found in state. The 'company_brief' "
+            "key is missing or empty. Ensure the ideation_agent ran successfully."
+        )
+
+    # Get session_id from invocation context
+    session_id = callback_context._invocation_context.session.id
+
+    # Create an Assets collection with the brief
+    # ReportAsset defaults to text/markdown MIME type
+    assets = Assets(
+        session_id=session_id,
+        asset_type="briefs",
+        items=[ReportAsset(content=company_brief, filename="gtm_brief.md")],
+    )
+
+    try:
+        # Save the assets collection
+        saved_files = assets.save()
+
+        if not saved_files:
+            raise ValueError("Assets.save() returned empty list")
+
+        # Store the asset metadata in state for easy retrieval
+        callback_context.state["company_brief_asset_url"] = saved_files[0]["url"]
+        callback_context.state["company_brief_asset_path"] = saved_files[0]["path"]
+        logging.info(f"Company brief saved successfully to {saved_files[0]['url']}")
+
+    except Exception as e:
+        logging.error(f"Failed to save company brief: {e}")
+        raise ValueError(f"Failed to save company brief to asset server: {e}") from e
+
 
 # ADK root_agent for A2A compatibility
 ideation_agent = Agent(
@@ -131,5 +188,6 @@ ideation_agent = Agent(
     description="Expands startup ideas into ICPs, pain points, and market context",
     instruction=ideation_prompt,
     output_key="company_brief",
+    after_agent_callback=save_company_brief_callback,
 )
 

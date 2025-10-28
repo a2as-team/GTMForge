@@ -39,6 +39,9 @@ output/assets/
 !output/images/*.txt
 !output/videos/*.txt
 
+# Generated asset server outputs
+asset_server_root/*
+
 implementation.md
 
 secrets/
