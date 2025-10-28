@@ -265,7 +265,7 @@ export default function App() {
     }
   }, [agentName]);
 
-  const handleSubmit = useCallback(async (query: string) => {
+  const handleSubmit = useCallback(async (query: string, images?: File[]) => {
     if (!query.trim()) return;
 
     setIsLoading(true);
@@ -304,6 +304,31 @@ export default function App() {
         agent: '',
       }]);
 
+      // Prepare message parts (images first, then text)
+      const parts: any[] = [];
+      if (images && images.length > 0) {
+        const fileToBase64 = async (file: File): Promise<string> => {
+          const buffer = await file.arrayBuffer();
+          let binary = '';
+          const bytes = new Uint8Array(buffer);
+          const chunkSize = 0x8000;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            const chunk = bytes.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, Array.from(chunk) as unknown as number[]);
+          }
+          return btoa(binary);
+        };
+
+        const encodedImages = await Promise.all(images.map(async (img) => ({
+          inline_data: {
+            data: await fileToBase64(img),
+            mime_type: img.type,
+          }
+        })));
+        parts.push(...encodedImages);
+      }
+      parts.push({ text: query });
+
       // Send the message with retry logic
       const sendMessage = async () => {
         const response = await fetch("/api/run_sse", {
@@ -316,7 +341,7 @@ export default function App() {
             userId: currentUserId,
             sessionId: currentSessionId,
             newMessage: {
-              parts: [{ text: query }],
+              parts,
               role: "user"
             },
             streaming: false

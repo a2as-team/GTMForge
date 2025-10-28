@@ -4,7 +4,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import DualVerticalGalleries from "@/components/animations/DualVerticalGalleries";
 
 interface WelcomeScreenProps {
-  handleSubmit: (query: string) => void;
+  handleSubmit: (query: string, images?: File[]) => void;
   isLoading: boolean;
   onCancel: () => void;
 }

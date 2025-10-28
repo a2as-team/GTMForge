@@ -319,7 +319,7 @@ interface ChatMessagesViewProps {
   messages: { type: "human" | "ai"; content: string; id: string; agent?: string; finalReportWithCitations?: boolean }[];
   isLoading: boolean;
   scrollAreaRef: React.RefObject<HTMLDivElement | null>;
-  onSubmit: (query: string) => void;
+  onSubmit: (query: string, images?: File[]) => void;
   onCancel: () => void;
   displayData: string | null;
   messageEvents: Map<string, ProcessedEvent[]>;
