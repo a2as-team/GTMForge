@@ -18,7 +18,13 @@ import re
 from collections.abc import AsyncGenerator
 from typing import Literal
 
-from google.adk.agents import BaseAgent, LlmAgent, LoopAgent, SequentialAgent
+from google.adk.agents import (
+    BaseAgent,
+    LlmAgent,
+    LoopAgent,
+    ParallelAgent,
+    SequentialAgent,
+)
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
@@ -27,13 +33,26 @@ from google.adk.tools import google_search
 from google.adk.tools.agent_tool import AgentTool
 from google.genai import types as genai_types
 from pydantic import BaseModel, Field
-from .agents.deep_research import market_research_wrapper, express_market_research_wrapper
+from .agents.deep_research import (
+    market_research_wrapper,
+    express_market_research_wrapper,
+)
 from .agents.ideation_agent import ideation_agent
+from .agents.mockups_agent import mockups_agent
+from .agents.prd_agent import prd_agent
 from .agents.website_spec_agent import website_spec_agent
 from .config import config
 
+# parallel_task_agent = ParallelAgent(
+#     name="parallel_design_branch",
+#     description="Runs website specification and mockup generation in parallel.",
+#     sub_agents=[
+#         website_spec_agent,
+#         mockups_agent,
+#     ],
+# )
 
-workflow_root_agent=SequentialAgent(
+workflow_root_agent = SequentialAgent(
     name="workflow_root_agent",
     description="Executes the end-to-end workflow for building a startup.",
     sub_agents=[
@@ -41,14 +60,17 @@ workflow_root_agent=SequentialAgent(
         express_market_research_wrapper,
         ideation_agent,
         website_spec_agent,
+        prd_agent,
+        # mockups_agent,
     ],
 )
-    
+
 
 root_agent = LlmAgent(
     name="forge",
     description="The main agent for GTM Forge.",
     model=config.research_config.worker_model,
-    instruction=config.prompts_config.persona,
+    global_instruction=config.prompts_config.persona,
+    instruction="Once the user provides a startup idea, execute the 'workflow_root_agent'to begin building a startup.",
     sub_agents=[workflow_root_agent],
 )

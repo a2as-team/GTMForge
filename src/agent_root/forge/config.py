@@ -36,11 +36,13 @@ class ResearchConfiguration(BaseModel):
     Attributes:
         critic_model (str): Model for evaluation tasks.
         worker_model (str): Model for working/generation tasks.
+        nano_banana_model (str): Specialized model for UI mockup generation tasks.
         max_search_iterations (int): Maximum search iterations allowed.
     """
 
     critic_model: str = "gemini-2.5-pro"
     worker_model: str = "gemini-2.5-flash"
+    nano_banana_model: str = "gemini-2.5-flash-image"
     max_search_iterations: int = 5
 
 

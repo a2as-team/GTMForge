@@ -381,27 +381,293 @@ Based on the startup's industry and target market, primary keywords to naturally
 - **Screen Reader**: Semantic HTML with proper ARIA labels
 
 ### 6.5 Browser Compatibility
-- **Modern Browsers**: Chrome, Firefox, Safari, Edge (latest 2 versions)
-- **Mobile Browsers**: iOS Safari, Chrome Mobile
+- **Target Browser**: Google Chrome (latest version)
+- **Mobile Browser**: Chrome Mobile (basic responsive support)
 
-## 7. Next Steps & Implementation Notes
+## 7. Technical Implementation Requirements
 
-### 7.1 Asset Generation Sequence
+### 7.1 Architecture Constraints
+- **Single HTML File**: All code (HTML, CSS, JavaScript) must be embedded in one `.html` file
+- **No External Dependencies**: Except media assets (images, videos, PDF) served from asset server
+- **No Build Step**: File must open directly in Chrome browser without compilation
+- **No Frameworks**: Pure vanilla HTML/CSS/JavaScript only (no React, Vue, jQuery, Tailwind CDN, etc.)
+- **Target Browser**: Google Chrome (latest version)
+- **Mobile Support**: Basic responsive design for mobile Chrome
+
+### 7.2 CSS Requirements
+
+**Approach**: Semantic class names with BEM-style conventions (Block Element Modifier)
+
+**Required CSS Features**:
+- CSS Custom Properties (variables) for theming (colors, spacing, fonts, shadows)
+- CSS Grid for page layout and section organization
+- Flexbox for component layouts within sections
+- Modern CSS animations and transitions (moderate complexity)
+- Mobile-first responsive design with media queries
+- Smooth transitions on hover/focus states
+- Scroll-driven animations for sections appearing on scroll
+
+**Naming Convention**: Use BEM (Block Element Modifier) pattern
+- `.component` for blocks (e.g., `.hero`, `.feature-card`)
+- `.component__element` for elements within blocks (e.g., `.hero__title`, `.feature-card__icon`)
+- `.component--modifier` for variations (e.g., `.button--primary`, `.card--highlighted`)
+
+**CSS Organization Pattern**:
+```css
+:root {
+  /* CSS Custom Properties: color palette, spacing scale, typography, shadows, etc. */
+}
+
+/* 1. CSS Reset/Normalize */
+/* 2. Base styles (body, typography, links) */
+/* 3. Layout components (header, nav, sections, footer) */
+/* 4. UI components (buttons, cards, carousel, modal) */
+/* 5. Responsive media queries */
+/* 6. Animations and transitions */
+```
+
+**Target File Size**: <30KB for all CSS (inlined in `<style>` tag)
+
+**Example Structure to Specify**:
+Define CSS custom properties for:
+- Color palette (primary, secondary, text, background, accent colors)
+- Spacing scale (xs, sm, md, lg, xl)
+- Typography (font families, sizes, weights, line heights)
+- Border radius values
+- Shadow definitions
+- Transition durations
+
+### 7.3 JavaScript Requirements
+
+**Approach**: Vanilla JavaScript (ES6+) with modern browser APIs
+
+**Required Interactive Features**:
+
+1. **Screenshot Carousel**:
+   - Previous/Next navigation buttons
+   - Touch/swipe support for mobile devices
+   - Keyboard navigation support (arrow keys)
+   - Pagination dots indicator showing current slide
+   - Optional auto-advance (pausable on hover/interaction)
+
+2. **Smooth Scrolling**:
+   - Navigation links scroll smoothly to page sections
+   - Smooth scroll behavior enabled
+
+3. **Video Player**:
+   - Standard HTML5 video controls
+   - Lazy loading (load only when visible)
+   - Poster image shown before play
+
+4. **Pitch Deck Display**:
+   - Embedded PDF viewer using `<embed>` or modal popup
+   - Navigation if multiple slides/pages shown
+
+5. **Mobile Menu**:
+   - Hamburger menu toggle for mobile navigation
+   - Smooth open/close animation
+   - Closes when clicking outside or on link
+
+6. **Scroll Animations**:
+   - Fade-in and/or slide-up effects as sections enter viewport
+   - Use Intersection Observer API for performance
+   - Respect `prefers-reduced-motion` media query
+
+**JavaScript Organization Pattern**:
+```javascript
+// 1. Configuration & state objects
+// 2. Utility functions (debounce, throttle, etc.)
+// 3. Component logic (carousel controller, menu controller, etc.)
+// 4. Event listener setup
+// 5. Initialization code (DOMContentLoaded)
+```
+
+**Target File Size**: <20KB for all JavaScript (inlined in `<script>` tag)
+
+**Modern APIs to Use**:
+- Intersection Observer API (for scroll animations and lazy loading)
+- Touch Events API (for mobile swipe gestures)
+- LocalStorage API (for user preferences, if needed)
+- requestAnimationFrame (for smooth animations)
+
+### 7.4 Animations & Interactions (Moderate Complexity)
+
+**On Page Scroll**:
+- Sections fade in and/or slide up as they enter the viewport
+- Optional subtle parallax effect on hero background
+- Optional scroll progress indicator or scroll-to-top button
+
+**On Hover** (desktop only):
+- Buttons: subtle lift effect and shadow enhancement
+- Cards: gentle scale (1.02-1.05) or lift effect
+- Links: animated underline or color transition
+- Images: subtle zoom or overlay effect
+
+**Transitions & Timing**:
+- Carousel slides: smooth slide or fade transition (300-500ms)
+- Menu open/close: smooth expand/collapse animation (250-350ms)
+- Modal/lightbox: fade in with scale effect (200-300ms)
+- Hover effects: fast response (150-250ms)
+
+**Performance Optimization**:
+- Use `transform` and `opacity` for animations (GPU-accelerated)
+- Avoid animating `width`, `height`, `top`, `left` (causes layout reflow)
+- Use `will-change` sparingly for critical animations only
+
+### 7.5 Accessibility (Basic WCAG 2.1 AA Compliance)
+
+**Required Elements**:
+- Semantic HTML5 elements (`<header>`, `<nav>`, `<main>`, `<section>`, `<article>`, `<footer>`)
+- Descriptive alt text for all images
+- Color contrast ratio ≥ 4.5:1 for normal text, ≥ 3:1 for large text
+- Keyboard navigation support (logical tab order, visible focus states)
+- ARIA labels where semantic HTML is insufficient
+- Skip-to-content link for keyboard users
+- Form labels properly associated with inputs
+
+**Not Required** (beyond basic compliance):
+- Extensive screen reader testing
+- ARIA live regions for dynamic content
+- Detailed ARIA role/state/property attributes
+- High contrast mode support
+- Advanced keyboard shortcuts
+
+### 7.6 Responsive Design (Mobile-First Approach)
+
+**Breakpoints to Specify**:
+- **Mobile**: <768px (base styles, single column layouts)
+- **Tablet**: 768px - 1024px (transitional layouts)
+- **Desktop**: >1024px (multi-column layouts, enhanced features)
+
+**Mobile Considerations** (<768px):
+- Touch-friendly tap targets (minimum 44x44px for buttons/links)
+- Hamburger menu for navigation
+- Single column layouts for content sections
+- Larger text for readability (16px minimum for body text)
+- Simplified or reduced animations (respect `prefers-reduced-motion`)
+- Stack carousel slides vertically if needed
+
+**Desktop Enhancements** (>1024px):
+- Multi-column grid layouts (2-3 columns for features, use cases)
+- Hover states and effects
+- More sophisticated animations and transitions
+- Wider content containers (max-width: 1200-1400px)
+- Side-by-side content and image layouts
+
+### 7.7 Performance Targets
+
+**Loading Performance**:
+- **First Paint**: <1.5 seconds on 3G connection
+- **HTML File Size**: <200KB total (uncompressed, excluding external assets)
+- **Total Inline CSS**: <30KB
+- **Total Inline JavaScript**: <20KB
+
+**Asset Optimization**:
+- **Images**: Lazy loaded using `loading="lazy"` attribute, optimized WebP format recommended
+- **Video**: Lazy loaded, poster image shown initially, preload="none"
+- **Fonts**: System fonts preferred (no external font loading)
+
+**Code Optimization**:
+- Minify CSS and JavaScript (remove comments, whitespace)
+- Combine and deduplicate CSS rules where possible
+- Use efficient selectors (avoid deep nesting)
+
+### 7.8 File Structure Template
+
+The HTML generation agent must follow this exact structure:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[Company Name] - [Tagline]</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="[Description from spec]">
+  <meta property="og:title" content="[Company Name]">
+  <meta property="og:description" content="[Description]">
+  <meta property="og:type" content="website">
+
+  <!-- Inline CSS (all styles embedded here) -->
+  <style>
+    /* All CSS code goes here */
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <!-- All HTML content sections in order -->
+  <!-- Footer -->
+
+  <!-- Inline JavaScript (all scripts embedded here) -->
+  <script>
+    /* All JavaScript code goes here */
+  </script>
+</body>
+</html>
+```
+
+### 7.9 Asset References (External Dependencies)
+
+**Image References**:
+```html
+<img src="/assets/[session_id]/images/[filename]" alt="Descriptive alt text" loading="lazy">
+```
+
+**Video References**:
+```html
+<video src="/assets/[session_id]/videos/[filename]" poster="/assets/[session_id]/images/[poster_filename]" controls preload="none"></video>
+```
+
+**Pitch Deck References**:
+```html
+<embed src="/assets/[session_id]/decks/[filename]" type="application/pdf" width="100%" height="600px">
+```
+
+All asset paths should reference the asset server URL structure: `/assets/[session_id]/[asset_type]/[filename]`
+
+### 7.10 Code Quality Requirements
+
+**HTML**:
+- Valid HTML5 (no parsing errors)
+- Semantic element usage throughout
+- Proper nesting and closing tags
+- Accessible form elements
+
+**CSS**:
+- Consistent naming convention (BEM)
+- Organized by component/section
+- No unused selectors
+- Mobile-first media queries
+
+**JavaScript**:
+- ES6+ modern syntax
+- Clear function and variable names
+- Comments for complex logic
+- Error handling for critical operations
+- No console.log statements in production code
+
+## 8. Next Steps & Implementation Notes
+
+### 8.1 Asset Generation Sequence
 1. **Phase 1 - Visual Assets**: Generate all images (hero, screenshots, icons)
 2. **Phase 2 - Video Asset**: Generate promo video
 3. **Phase 3 - Document Asset**: Generate pitch deck
 4. **Phase 4 - HTML Generation**: Create website HTML with all assets integrated
 
-### 7.2 HTML Generation Requirements
+### 8.2 HTML Generation Requirements
 The HTML generation agent should:
 - Use modern, semantic HTML5
 - Include all specified sections in order
 - Embed asset placeholders that reference generated files
-- Include basic CSS for structure (can be enhanced later)
+- Follow the single-file architecture with inline CSS and JavaScript
 - Ensure responsive design with mobile-first approach
 - Add basic SEO meta tags (title, description, OG tags)
+- Use BEM naming convention for CSS classes
+- Implement all interactive features specified in section 7.3
 
-### 7.3 Testing & Validation Checklist
+### 8.3 Testing & Validation Checklist
 - [ ] All sections present and in correct order
 - [ ] All CTAs functional and clearly visible
 - [ ] All images load correctly with proper alt text
@@ -411,8 +677,11 @@ The HTML generation agent should:
 - [ ] Page loads in <3 seconds
 - [ ] No console errors
 - [ ] Accessibility audit passes
+- [ ] File opens directly in Chrome without build step
+- [ ] No external dependencies except media assets
+- [ ] CSS and JavaScript properly inlined
 
-### 7.4 Future Enhancements (Post-Launch)
+### 8.4 Future Enhancements (Post-Launch)
 - A/B testing of CTAs and headlines
 - Interactive product demos
 - Live chat integration

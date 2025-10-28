@@ -1,12 +1,25 @@
 """FastAPI server for serving static assets."""
 
+import html
 import os
-from pathlib import Path
+import shutil
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, FileResponse
+from pathlib import Path
+from urllib.parse import quote
+
 import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from starlette import status
+
+try:  # pragma: no cover - dependency ensured via pyproject
+    import markdown as markdown_lib
+except ImportError:  # pragma: no cover
+    markdown_lib = None
+
+
+MARKDOWN_EXTENSIONS = {".md", ".markdown"}
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -105,6 +118,18 @@ def generate_html(title: str, content: str) -> str:
             .item-name a:hover {{
                 color: #4CAF50;
             }}
+            .item-actions {{
+                margin-left: 12px;
+                font-size: 13px;
+            }}
+            .item-actions a {{
+                color: #4CAF50;
+                text-decoration: none;
+                margin-left: 8px;
+            }}
+            .item-actions a:first-child {{
+                margin-left: 0;
+            }}
             .item-icon {{
                 margin-right: 10px;
                 font-size: 20px;
@@ -128,6 +153,60 @@ def generate_html(title: str, content: str) -> str:
                 font-size: 12px;
                 margin-left: 10px;
             }}
+            .inline-form {{
+                display: inline-block;
+                margin-left: 12px;
+            }}
+            .inline-form button {{
+                background-color: #ff6961;
+                border: none;
+                color: white;
+                padding: 6px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 13px;
+            }}
+            .inline-form button:hover {{
+                background-color: #ff4c41;
+            }}
+            .markdown-container {{
+                background-color: white;
+                padding: 24px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+                line-height: 1.6;
+            }}
+            .markdown-container h1,
+            .markdown-container h2,
+            .markdown-container h3,
+            .markdown-container h4,
+            .markdown-container h5,
+            .markdown-container h6 {{
+                margin-top: 1.4em;
+                margin-bottom: 0.6em;
+            }}
+            .markdown-container pre {{
+                background-color: #1f1f1f;
+                color: #f5f5f5;
+                padding: 12px 16px;
+                border-radius: 6px;
+                overflow-x: auto;
+            }}
+            .markdown-container code {{
+                background-color: rgba(27,31,35,0.05);
+                padding: 2px 4px;
+                border-radius: 4px;
+            }}
+            .markdown-container table {{
+                border-collapse: collapse;
+                width: 100%;
+                margin: 16px 0;
+            }}
+            .markdown-container table th,
+            .markdown-container table td {{
+                border: 1px solid #e0e0e0;
+                padding: 8px 12px;
+            }}
         </style>
     </head>
     <body>
@@ -138,6 +217,33 @@ def generate_html(title: str, content: str) -> str:
     </body>
     </html>
     """
+
+
+def _ensure_markdown_available() -> None:
+    if markdown_lib is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Markdown rendering library not available. Ensure 'markdown' dependency is installed.",
+        )
+
+
+def _read_markdown_file(file_path: Path) -> str:
+    try:
+        return file_path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:  # pragma: no cover - fastapi handles
+        raise HTTPException(status_code=404, detail="File not found") from exc
+    except OSError as exc:  # pragma: no cover
+        raise HTTPException(status_code=500, detail="Unable to read markdown file") from exc
+
+
+def _ensure_within_asset_root(path: Path) -> Path:
+    try:
+        resolved = path.resolve(strict=False)
+    except FileNotFoundError:
+        resolved = path.resolve()
+    if not str(resolved).startswith(str(ASSET_ROOT.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid session path")
+    return resolved
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -182,6 +288,9 @@ async def list_sessions():
                     <span class="item-icon">📁</span>
                     <a href="/browse/{session['name']}">{session['name']}</a>
                     <span class="badge">{asset_count} type(s)</span>
+                    <form class="inline-form" method="post" action="/sessions/{session['name']}/delete" onsubmit="return confirm('Delete session {session['name']} and all assets?');">
+                        <button type="submit">Delete</button>
+                    </form>
                 </div>
                 <div class="item-meta">
                     {asset_types_str}<br>
@@ -294,21 +403,32 @@ async def browse_asset_type(session_id: str, asset_type: str):
     else:
         items = []
         for file in files:
-            # Determine icon based on file extension
             ext = file['path'].suffix.lower()
             icon = {
-                '.md': '📝', '.txt': '📄', '.html': '🌐',
+                '.md': '📝', '.markdown': '📝', '.txt': '📄', '.html': '🌐',
                 '.png': '🖼️', '.jpg': '🖼️', '.jpeg': '🖼️', '.gif': '🖼️',
                 '.mp4': '🎬', '.webm': '🎬', '.mov': '🎬',
                 '.json': '📋', '.pdf': '📕'
             }.get(ext, '📄')
 
-            file_url = f"/assets/{session_id}/{asset_type}/{file['name']}"
+            encoded_name = quote(file['name'])
+            file_url = f"/assets/{session_id}/{asset_type}/{encoded_name}"
+            display_name = html.escape(file['name'])
+
+            if ext in MARKDOWN_EXTENSIONS:
+                rendered_url = f"/render/{session_id}/{asset_type}/{encoded_name}"
+                main_link = f"<a href=\"{rendered_url}\" target=\"_blank\">{display_name}</a>"
+                extra_links = f"<span class=\"item-actions\"><a href=\"{rendered_url}\" target=\"_blank\">Rendered</a><a href=\"{file_url}\" target=\"_blank\">Raw</a></span>"
+            else:
+                main_link = f"<a href=\"{file_url}\" target=\"_blank\">{display_name}</a>"
+                extra_links = ""
+
             items.append(f"""
             <li class="item">
                 <div class="item-name">
                     <span class="item-icon">{icon}</span>
-                    <a href="{file_url}" target="_blank">{file['name']}</a>
+                    {main_link}
+                    {extra_links}
                 </div>
                 <div class="item-meta">
                     {format_size(file['size'])}<br>
@@ -329,6 +449,64 @@ async def browse_asset_type(session_id: str, asset_type: str):
     """
 
     return generate_html(f"{asset_type} - {session_id}", content)
+
+
+@app.get("/render/{session_id}/{asset_type}/{filename}", response_class=HTMLResponse)
+async def render_markdown_asset(session_id: str, asset_type: str, filename: str):
+    """Render a markdown asset as HTML."""
+
+    file_path = ASSET_ROOT / session_id / asset_type / filename
+
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    if file_path.suffix.lower() not in MARKDOWN_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Requested file is not markdown")
+
+    _ensure_markdown_available()
+
+    markdown_text = _read_markdown_file(file_path)
+    html_body = markdown_lib.markdown(  # type: ignore[union-attr]
+        markdown_text,
+        extensions=["fenced_code", "tables"],
+        output_format="html5",
+    )
+
+    encoded_name = quote(filename)
+    raw_url = f"/assets/{session_id}/{asset_type}/{encoded_name}"
+
+    breadcrumb = f"<a href=\"/\">Home</a> / <a href=\"/browse/{session_id}\">{session_id}</a> / <a href=\"/browse/{session_id}/{asset_type}\">{asset_type}</a> / {html.escape(filename)}"
+    content = f"""
+    <div class="breadcrumb">
+        {breadcrumb}
+    </div>
+    <div class="markdown-container">
+        <div class="item-actions" style="margin-bottom: 16px;">
+            <a href="{raw_url}" target="_blank">View raw markdown</a>
+        </div>
+        {html_body}
+    </div>
+    """
+
+    return generate_html(f"{filename} - {asset_type}", content)
+
+
+@app.post("/sessions/{session_id}/delete")
+async def delete_session(session_id: str):
+    """Delete a session folder and all contained assets."""
+
+    session_path = ASSET_ROOT / session_id
+    if not session_path.exists() or not session_path.is_dir():
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    resolved_path = _ensure_within_asset_root(session_path)
+
+    try:
+        shutil.rmtree(resolved_path)
+    except OSError as exc:  # pragma: no cover
+        raise HTTPException(status_code=500, detail="Failed to delete session") from exc
+
+    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
 
 # Mount the asset_server_root directory to serve all static files

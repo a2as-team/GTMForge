@@ -7,10 +7,12 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.118.2",
     "google-adk>=1.17.0",
+    "markdown>=3.6",
     "uvicorn>=0.37.0",
 ]
 
 [dependency-groups]
 dev = [
+    "black>=25.9.0",
     "pytest>=8.4.2",
 ]

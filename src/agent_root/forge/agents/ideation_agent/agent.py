@@ -120,11 +120,11 @@ EXECUTIVE_SUMMARY_PARAGRAPH
   - SECTION_3: PURPOSE_3
 - **Social Proof:** SOCIAL_PROOF_RECOMMENDATION
 
-## Promo Video Script (15 Seconds)
-- 0-3s Hook: HOOK_TEXT_AND_NARRATION
-- 3-6s Problem: PROBLEM_TEXT_AND_NARRATION
-- 6-10s Solution: SOLUTION_TEXT_AND_NARRATION
-- 10-15s Call to Action: CTA_TEXT_AND_NARRATION
+## Promo Video Script (16-32 Seconds. Each beat must be 8 seconds and each beat must use different characters and setting in order to accomodate the fact that the video model can only generate one scene at a time with no continuity between scenes/beats.)
+- 0-8s Hook: HOOK_TEXT_AND_NARRATION
+- 8-16s Problem: PROBLEM_TEXT_AND_NARRATION
+- 16-24s Solution: SOLUTION_TEXT_AND_NARRATION
+- 24-32s Call to Action: CTA_TEXT_AND_NARRATION
 
 ## Market Research Report
 {final_cited_research_report}
@@ -147,4 +147,3 @@ ideation_agent = Agent(
     output_key="company_brief",
     after_agent_callback=save_company_brief_callback,
 )
-

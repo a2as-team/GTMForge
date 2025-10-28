@@ -13,7 +13,14 @@
       "Bash(python -m py_compile src/agent_root/forge/utils/callbacks.py)",
       "Bash(python -m py_compile src/agent_root/forge/utils/__init__.py)",
       "Bash(python -m py_compile src/agent_root/forge/agents/deep_research/agent.py)",
-      "Bash(python -m py_compile src/agent_root/forge/agents/ideation_agent/agent.py)"
+      "Bash(python -m py_compile src/agent_root/forge/agents/ideation_agent/agent.py)",
+      "Bash(cat .gitmodules)",
+      "Bash(make -n setup-adk-expert)",
+      "Bash(make help)",
+      "Bash(make -n setup)",
+      "Bash(python -m py_compile src/agent_root/forge/agents/prd_agent/__init__.py)",
+      "Bash(python -m py_compile src/agent_root/forge/agents/prd_agent/agent.py)",
+      "Bash(tree -L 3 src/agent_root/forge/agents/prd_agent)"
     ],
     "deny": [],
     "ask": []

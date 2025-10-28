@@ -13,8 +13,9 @@ Contains all specialized agents for the GTMForge pipeline.
 # from forge.agents.canva_agent.agent import CanvaAgent
 # from forge.agents.publisher_agent.agent import PublisherAgent
 from forge.agents.ideation_agent.agent import ideation_agent
+from forge.agents.prd_agent.agent import prd_agent
 from forge.agents.website_spec_agent.agent import website_spec_agent
 
 root_agent=ideation_agent
 
-__all__=["root_agent","ideation_agent", "website_spec_agent"]
+__all__=["root_agent","ideation_agent", "prd_agent", "website_spec_agent"]
