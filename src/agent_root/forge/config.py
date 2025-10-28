@@ -103,8 +103,7 @@ class Configuration(BaseModel):
     image_generation_model: str = "gemini-2.5-flash-image"
     worker_model: str = "gemini-2.5-flash"
     pro_model: str = "gemini-2.5-pro"
-    # video_model: str = "veo-3.0-fast-generate-001"
-    video_model: str = "veo-2.0-generate-001"
+    video_model: str = "veo-3.1-generate-preview"
 
     research_config: ResearchConfiguration = Field(
         default_factory=ResearchConfiguration

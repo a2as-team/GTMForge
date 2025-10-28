@@ -43,28 +43,52 @@ class VideoGenerationAgent(BaseAgent):
             description="Generates and stitches video clips using Google Veo",
             **data
         )
+
+        logging.warning(">>> Constructing video_agent sequence")
         
         # Initialize clients as instance attributes (not Pydantic fields)
         project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "mock-project")
-        self._veo_client = VeoClient(project_id=project_id)
+        api_key = os.environ.get("GEMINI_API_KEY")
+        use_vertex = os.environ.get("GOOGLE_GENAI_USE_VERTEXAI", "").upper() == "TRUE"
+        
+        self._veo_client = VeoClient(project_id=project_id, model_name=config.video_model)
         self._stitcher = VideoStitcher(transition_duration=0.5)
+        
+        # Enable Veo if we have an API key OR we have a real project with Vertex AI
+        self._veo_enabled = bool(api_key) or (
+            project_id not in ["mock-project", "CHANGE-ME"] and use_vertex
+        )
+        
+        logging.info(f"[VideoGenerationAgent] Veo config: project_id={project_id}, has_api_key={bool(api_key)}, use_vertex={use_vertex}, veo_enabled={self._veo_enabled}")
         
     async def _run_async_impl(
         self,
         ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         """Generate videos based on the plan in state."""
+        logging.warning(f"[{self.name}] Starting video generation. Veo enabled: {self._veo_enabled}")
         
         state = ctx.session.state
         
-        # Get the video generation plan
+        # Check if Veo is enabled
+        if not self._veo_enabled:
+            logging.warning(
+                "Veo API not configured. Skipping video generation. "
+                "Set GOOGLE_API_KEY or configure GOOGLE_CLOUD_PROJECT to enable."
+            )
+            content = genai_types.Content(
+                role="model",
+                parts=[genai_types.Part(text="Video generation skipped - Veo API not configured. Set GOOGLE_API_KEY or GOOGLE_CLOUD_PROJECT environment variable to enable.")]
+            )
+            yield Event(author=self.name, content=content)
+            return
+            
         plan_data = state.get("video_generation_plan")
         if not plan_data:
             logging.error("No video generation plan found in state")
             yield Event(author=self.name)
             return
         
-        # Parse plan
         if isinstance(plan_data, dict):
             plan = VideoGenerationPlan(**plan_data)
         else:
@@ -91,13 +115,24 @@ class VideoGenerationAgent(BaseAgent):
                     logging.error(f"Invalid prompt for clip {i}: {error}")
                     continue
                 
-                # Generate video
-                video_bytes = await self._veo_client.generate_video(
-                    prompt=clip_prompt.scene_description,
-                    duration_seconds=clip_prompt.duration,
-                    aspect_ratio="16:9",
-                    style=clip_prompt.visual_style
-                )
+                # Cap duration to 8 seconds max
+                duration = min(clip_prompt.duration, 8)
+                logging.info(f"Generating clip with duration: {duration}s (capped from {clip_prompt.duration}s)")
+                
+                # Generate video with timeout
+                try:
+                    video_bytes = await asyncio.wait_for(
+                        self._veo_client.generate_video(
+                            prompt=clip_prompt.scene_description,
+                            duration_seconds=duration,
+                            aspect_ratio="16:9",
+                            style=clip_prompt.visual_style
+                        ),
+                        timeout=180.0  # 3 minutes timeout per clip
+                    )
+                except asyncio.TimeoutError:
+                    logging.error(f"Video generation timed out for clip {i}")
+                    continue
                 
                 # Save individual clip
                 session_id = ctx.session.id
@@ -110,7 +145,7 @@ class VideoGenerationAgent(BaseAgent):
                     items=[VideoAsset(
                         content=video_bytes,
                         filename=clip_filename,
-                        duration=clip_prompt.duration
+                        duration=duration
                     )]
                 )
                 
@@ -122,7 +157,7 @@ class VideoGenerationAgent(BaseAgent):
                     # Add to metadata
                     metadata = VideoClipMetadata(
                         clip_index=i,
-                        duration=clip_prompt.duration,
+                        duration=duration,
                         local_path=clip_path,
                         asset_url=clip_url,
                         scene_description=clip_prompt.scene_description
@@ -222,11 +257,35 @@ class VideoGenerationAgent(BaseAgent):
         yield Event(author=self.name, content=content)
 
 
+def log_video_planner_state(callback_context: CallbackContext) -> None:
+    """Log state before video planning to debug issues."""
+    state = callback_context._invocation_context.session.state
+    logging.warning(f"[video_plan_generator] Starting video planning")
+    
+    # Log what we have
+    if "company_brief" in state:
+        brief = state.get("company_brief")
+        logging.info(f"[video_plan_generator] Found company_brief: {type(brief)}")
+    else:
+        logging.warning(f"[video_plan_generator] No company_brief in state")
+        
+    if "website_spec" in state:
+        logging.info(f"[video_plan_generator] Found website_spec")
+    else:
+        logging.warning(f"[video_plan_generator] No website_spec in state")
+        
+    if "product_requirements_doc" in state:
+        logging.info(f"[video_plan_generator] Found product_requirements_doc")
+    else:
+        logging.warning(f"[video_plan_generator] No product_requirements_doc in state")
+
+
 # Video plan generator agent
 video_plan_generator = LlmAgent(
     name="video_plan_generator",
     model=config.research_config.worker_model,
     description="Creates a video generation plan from startup context",
+    before_agent_callback=log_video_planner_state,
     instruction="""You are a video creative director specializing in startup promotional videos.
 
     Your task is to analyze the startup context from upstream agents and create a compelling
@@ -238,12 +297,13 @@ video_plan_generator = LlmAgent(
     - product_requirements_doc: Detailed product specifications
     - mockups_manifest: UI/UX mockup details
 
-    Create a video plan with exactly 2-3 clips (8-12 seconds each) that:
+    Create a video plan with exactly 2-3 clips (8 seconds each MAX) that:
     1. Hook the viewer with the problem/pain point
     2. Introduce the solution elegantly
     3. Show the value/benefits (optional 3rd clip)
 
     Each clip should have:
+    - duration: EXACTLY 8 seconds (this is the max Veo supports)
     - Clear scene description (what happens visually)
     - Visual style (cinematic, minimal, dynamic, etc.)
     - Key message/narrative
@@ -256,7 +316,7 @@ video_plan_generator = LlmAgent(
     - Concise, impactful messaging
 
     The video should work without sound but can include text overlays.
-    Total runtime should be 20-30 seconds after stitching.""",
+    Total runtime should be 16-24 seconds after stitching (2-3 clips × 8 seconds).""",
     output_schema=VideoGenerationPlan,
     output_key="video_generation_plan",
 )
