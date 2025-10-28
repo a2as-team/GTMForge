@@ -41,9 +41,7 @@ from .agents.ideation_agent import ideation_agent
 from .agents.mockups_agent import mockups_agent
 from .agents.prd_agent import prd_agent
 from .agents.website_spec_agent import website_spec_agent
-
-# from .agents.video_agent import video_agent
-
+from .agents.video_agent import video_agent
 from .agents.image_generation_agent import image_generation_agent
 from .config import config
 
@@ -52,7 +50,7 @@ parallel_task_agent = ParallelAgent(
     description="Runs mockup generation and video creation in parallel.",
     sub_agents=[
         mockups_agent,
-        #        video_agent,
+        video_agent,
         website_spec_agent,
         prd_agent,
     ],
