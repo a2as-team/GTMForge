@@ -36,11 +36,13 @@ class ResearchConfiguration(BaseModel):
     Attributes:
         critic_model (str): Model for evaluation tasks.
         worker_model (str): Model for working/generation tasks.
+        nano_banana_model (str): Specialized model for UI mockup generation tasks.
         max_search_iterations (int): Maximum search iterations allowed.
     """
 
     critic_model: str = "gemini-2.5-pro"
     worker_model: str = "gemini-2.5-flash"
+    nano_banana_model: str = "gemini-2.5-flash-image"
     max_search_iterations: int = 5
 
 
@@ -61,7 +63,7 @@ class PromptsConfiguration(BaseModel):
     def load_prompts_from_disk(cls, data: dict) -> dict:
         """Load prompt files from the prompts directory."""
         # Get prompts path from environment or use default
-        prompts_path = os.environ.get("FORGE_PROMPTS_PATH", "./prompts/forge")
+        prompts_path = os.environ.get("PROMPTS_PATH", "./prompts/default")
         prompts_dir = Path(prompts_path)
 
         if not prompts_dir.exists():
@@ -92,7 +94,7 @@ class PromptsConfiguration(BaseModel):
 
 
 class Configuration(BaseModel):
-    """Main configuration object for Forge.
+    """Main configuration object.
 
     Attributes:
         research_config (ResearchConfiguration): Research-related configuration.

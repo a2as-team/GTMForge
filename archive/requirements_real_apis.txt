@@ -1,6 +1,0 @@
-# Additional dependencies for real API integration
-google-cloud-aiplatform>=1.38.0
-aiohttp>=3.9.0
-pillow>=10.0.0
-
-
