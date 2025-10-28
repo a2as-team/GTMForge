@@ -31,7 +31,7 @@ def save_generated_image_callback(
         # Extract image from inline_data format (gemini-2.5-flash-image)
 
         if hasattr(response, "content") and response.content:
-            for part in candidate.content.parts:
+            for part in response.content.parts:
                 if hasattr(part, "inline_data") and part.inline_data:
                     image_data = part.inline_data.data
                     mime_type = part.inline_data.mime_type
@@ -61,24 +61,26 @@ def save_generated_image_callback(
     if not filename.endswith(f".{extension}"):
         filename = f"{filename}.{extension}"
 
-    # Convert to base64 string if needed (ImageAsset expects string)
-    if isinstance(image_data, bytes):
-        image_content = base64.b64encode(image_data).decode("utf-8")
-    else:
-        image_content = image_data
+    # inline_data.data is already raw binary bytes (not base64)
+    # Just use it directly
+    image_binary = image_data
 
-    # Save to asset server
+    # Save binary directly to asset server
     session_id = callback_context._invocation_context.session.id
     asset_type = callback_context.state.get("image_asset_type", "images")
 
     try:
-        assets = Assets(
+        # Create a simple object with content field containing binary data
+        from types import SimpleNamespace
+        binary_asset = SimpleNamespace(content=image_binary, filename=filename)
+
+        from forge.utils.asset_services import save_assets
+        saved_files = save_assets(
             session_id=session_id,
             asset_type=asset_type,
-            items=[ImageAsset(content=image_content, filename=filename)],
+            assets=[binary_asset],
+            mime_type=mime_type,
         )
-
-        saved_files = assets.save()
 
         if saved_files:
             callback_context.state["generated_image_url"] = saved_files[0]["url"]

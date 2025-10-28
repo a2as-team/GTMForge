@@ -262,26 +262,26 @@ def create_image_extraction_callback(
         prefix = filename_prefix or safe_screen_name
         filename = f"{index:02d}_{prefix}.{extension}"
 
-        # Step 4: Save image to asset server
+        # Step 4: Save binary image data
         session_id = callback_context._invocation_context.session.id
 
-        # ImageAsset expects base64-encoded string for content
-        # If image_data is already a base64 string, use it; if bytes, encode it
-        if isinstance(image_data, bytes):
-            image_content = base64.b64encode(image_data).decode("utf-8")
-        else:
-            # Already a base64 string
-            image_content = image_data
+        # inline_data.data is already raw binary bytes (not base64)
+        # Just use it directly
+        image_binary = image_data
 
         try:
-            # Use ImageAsset to save the image
-            assets = Assets(
+            # Create a simple object with content field containing binary data
+            from types import SimpleNamespace
+            binary_asset = SimpleNamespace(content=image_binary, filename=filename)
+
+            # Save binary directly to asset server
+            from forge.utils.asset_services import save_assets
+            saved_files = save_assets(
                 session_id=session_id,
                 asset_type=asset_type,
-                items=[ImageAsset(content=image_content, filename=filename)],
+                assets=[binary_asset],
+                mime_type=mime_type,
             )
-
-            saved_files = assets.save()
 
             if not saved_files:
                 logging.error("Failed to save image: Assets.save() returned empty list")
