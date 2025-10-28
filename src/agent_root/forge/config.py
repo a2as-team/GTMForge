@@ -42,7 +42,6 @@ class ResearchConfiguration(BaseModel):
 
     critic_model: str = "gemini-2.5-pro"
     worker_model: str = "gemini-2.5-flash"
-    nano_banana_model: str = "gemini-2.5-flash-image"
     max_search_iterations: int = 5
 
 
@@ -100,6 +99,11 @@ class Configuration(BaseModel):
         research_config (ResearchConfiguration): Research-related configuration.
         prompts_config (PromptsConfiguration): Prompts and templates configuration.
     """
+
+    image_generation_model: str = "gemini-2.5-flash-image"
+    worker_model: str = "gemini-2.5-flash"
+    pro_model: str = "gemini-2.5-pro"
+    video_model: str = "veo-3.0-fast-generate-001"
 
     research_config: ResearchConfiguration = Field(
         default_factory=ResearchConfiguration

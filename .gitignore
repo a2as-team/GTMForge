@@ -41,6 +41,7 @@ output/assets/
 
 # Generated asset server outputs
 asset_server_root/*
+!asset_server_root/index.html
 
 implementation.md
 

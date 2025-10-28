@@ -61,7 +61,7 @@ workflow_root_agent = SequentialAgent(
         ideation_agent,
         website_spec_agent,
         prd_agent,
-        # mockups_agent,
+        mockups_agent,
     ],
 )
 
@@ -69,7 +69,7 @@ workflow_root_agent = SequentialAgent(
 root_agent = LlmAgent(
     name="forge",
     description="The main agent for GTM Forge.",
-    model=config.research_config.worker_model,
+    model=config.worker_model,
     global_instruction=config.prompts_config.persona,
     instruction="Once the user provides a startup idea, execute the 'workflow_root_agent'to begin building a startup.",
     sub_agents=[workflow_root_agent],
