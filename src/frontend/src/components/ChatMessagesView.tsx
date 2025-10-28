@@ -357,7 +357,7 @@ export function ChatMessagesView({
   const lastAiMessageId = lastAiMessage?.id;
 
   return (
-    <div className="flex flex-col h-full w-full relative">
+    <div className="flex flex-col h-full w-full relative animate-fadeIn" style={{ animationDuration: '1.5s' }}>
 
       <DualVerticalGalleries />
 
