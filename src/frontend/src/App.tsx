@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { WelcomeScreen } from "@/components/WelcomeScreen";
-import { ChatMessagesView } from "@/components/ChatMessagesView";
+import { ProgressDashboard } from "@/components/ProgressDashboard";
+import PageTransition from "@/components/animations/PageTransition";
 
 // Update DisplayData to be a string type
 type DisplayData = string | null;
@@ -13,34 +14,15 @@ interface MessageWithAgent {
   finalReportWithCitations?: boolean;
 }
 
-interface AgentMessage {
-  parts: { text: string }[];
-  role: string;
-}
 
-interface AgentResponse {
-  content: AgentMessage;
-  usageMetadata: {
-    candidatesTokenCount: number;
-    promptTokenCount: number;
-    totalTokenCount: number;
-  };
-  author: string;
-  actions: {
-    stateDelta: {
-      research_plan?: string;
-      final_report_with_citations?: boolean;
-    };
-  };
-}
 
 interface ProcessedEvent {
   title: string;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 export default function App() {
-  const agentName = import.meta.env.VITE_AGENT_NAME || "luna";
+  const agentName = import.meta.env.VITE_AGENT_NAME || "forge";
   const [userId, setUserId] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [appName, setAppName] = useState<string | null>(null);
@@ -55,11 +37,11 @@ export default function App() {
   const accumulatedTextRef = useRef("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const retryWithBackoff = async (
-    fn: () => Promise<any>,
+  const retryWithBackoff = useCallback(async (
+    fn: () => Promise<unknown>,
     maxRetries: number = 10,
     maxDuration: number = 120000 // 2 minutes
-  ): Promise<any> => {
+  ): Promise<unknown> => {
     const startTime = Date.now();
     let lastError: Error;
     
@@ -79,9 +61,9 @@ export default function App() {
     }
     
     throw lastError!;
-  };
+  }, []);
 
-  const createSession = async (): Promise<{userId: string, sessionId: string, appName: string}> => {
+  const createSession = useCallback(async (): Promise<{userId: string, sessionId: string, appName: string}> => {
     const generatedSessionId = uuidv4();
     const response = await fetch(`/api/apps/${agentName}/users/u_999/sessions/${generatedSessionId}`, {
       method: "POST",
@@ -100,7 +82,7 @@ export default function App() {
       sessionId: data.id,
       appName: data.appName
     };
-  };
+  }, [agentName]);
 
   const checkBackendHealth = async (): Promise<boolean> => {
     try {
@@ -134,17 +116,17 @@ export default function App() {
       // Check if content.parts exists and has text
       if (parsed.content && parsed.content.parts) {
         textParts = parsed.content.parts
-          .filter((part: any) => part.text)
-          .map((part: any) => part.text);
+          .filter((part: { text?: string }) => part.text)
+          .map((part: { text: string }) => part.text);
         
         // Check for function calls
-        const functionCallPart = parsed.content.parts.find((part: any) => part.functionCall);
+        const functionCallPart = parsed.content.parts.find((part: { functionCall?: unknown }) => part.functionCall);
         if (functionCallPart) {
           functionCall = functionCallPart.functionCall;
         }
         
         // Check for function responses
-        const functionResponsePart = parsed.content.parts.find((part: any) => part.functionResponse);
+        const functionResponsePart = parsed.content.parts.find((part: { functionResponse?: unknown }) => part.functionResponse);
         if (functionResponsePart) {
           functionResponse = functionResponsePart.functionResponse;
         }
@@ -220,7 +202,7 @@ export default function App() {
     }
   };
 
-  const processSseEventData = (jsonData: string, aiMessageId: string) => {
+  const processSseEventData = useCallback((jsonData: string, aiMessageId: string) => {
     const { textParts, agent, finalReportWithCitations, functionCall, functionResponse, sourceCount, sources } = extractDataFromSSE(jsonData);
 
     if (sourceCount > 0) {
@@ -281,9 +263,9 @@ export default function App() {
       setMessages(prev => [...prev, { type: "ai", content: finalReportWithCitations as string, id: finalReportMessageId, agent: currentAgentRef.current, finalReportWithCitations: true }]);
       setDisplayData(finalReportWithCitations as string);
     }
-  };
+  }, [agentName]);
 
-  const handleSubmit = useCallback(async (query: string, model: string, effort: string) => {
+  const handleSubmit = useCallback(async (query: string, images?: File[]) => {
     if (!query.trim()) return;
 
     setIsLoading(true);
@@ -295,7 +277,7 @@ export default function App() {
       
       if (!currentSessionId || !currentUserId || !currentAppName) {
         console.log('Creating new session...');
-        const sessionData = await retryWithBackoff(createSession);
+        const sessionData = await retryWithBackoff(createSession) as { userId: string; sessionId: string; appName: string };
         currentUserId = sessionData.userId;
         currentSessionId = sessionData.sessionId;
         currentAppName = sessionData.appName;
@@ -322,6 +304,31 @@ export default function App() {
         agent: '',
       }]);
 
+      // Prepare message parts (images first, then text)
+      const parts: any[] = [];
+      if (images && images.length > 0) {
+        const fileToBase64 = async (file: File): Promise<string> => {
+          const buffer = await file.arrayBuffer();
+          let binary = '';
+          const bytes = new Uint8Array(buffer);
+          const chunkSize = 0x8000;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            const chunk = bytes.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, Array.from(chunk) as unknown as number[]);
+          }
+          return btoa(binary);
+        };
+
+        const encodedImages = await Promise.all(images.map(async (img) => ({
+          inline_data: {
+            data: await fileToBase64(img),
+            mime_type: img.type,
+          }
+        })));
+        parts.push(...encodedImages);
+      }
+      parts.push({ text: query });
+
       // Send the message with retry logic
       const sendMessage = async () => {
         const response = await fetch("/api/run_sse", {
@@ -334,7 +341,7 @@ export default function App() {
             userId: currentUserId,
             sessionId: currentSessionId,
             newMessage: {
-              parts: [{ text: query }],
+              parts,
               role: "user"
             },
             streaming: false
@@ -348,7 +355,7 @@ export default function App() {
         return response;
       };
 
-      const response = await retryWithBackoff(sendMessage);
+      const response = await retryWithBackoff(sendMessage) as Response;
 
       // Handle SSE streaming
       const reader = response.body?.getReader();
@@ -357,7 +364,6 @@ export default function App() {
       let eventDataBuffer = "";
 
       if (reader) {
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           const { done, value } = await reader.read();
 
@@ -419,7 +425,7 @@ export default function App() {
       }]);
       setIsLoading(false);
     }
-  }, [processSseEventData]);
+  }, [userId, sessionId, appName, createSession, processSseEventData]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -468,51 +474,39 @@ export default function App() {
     window.location.reload();
   }, []);
 
-  // Scroll to bottom when messages update
-  const scrollToBottom = useCallback(() => {
-    if (scrollAreaRef.current) {
-      const scrollViewport = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]"
-      );
-      if (scrollViewport) {
-        scrollViewport.scrollTop = scrollViewport.scrollHeight;
-      }
-    }
-  }, []);
+
 
   const BackendLoadingScreen = () => (
     <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">
-      <div className="w-full max-w-2xl z-10
-                      bg-neutral-900/50 backdrop-blur-md 
-                      p-8 rounded-2xl border border-neutral-700 
-                      shadow-2xl shadow-black/60">
+      <div className="w-full max-w-2xl z-10 bg-white/15 backdrop-blur-lg p-8 rounded-2xl border border-white/30 shadow-2xl animate-glow-pulse">
         
         <div className="text-center space-y-6">
-          <h1 className="text-4xl font-bold text-white flex items-center justify-center gap-3">
-            ✨ Luna 🌙
+          <h1 className="text-4xl font-bold flex items-center justify-center gap-3">
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient-flow" style={{backgroundSize: '200% 200%'}}>
+              GTMForge
+            </span>
           </h1>
           
           <div className="flex flex-col items-center space-y-4">
-            {/* Spinning animation */}
+
             <div className="relative">
-              <div className="w-16 h-16 border-4 border-neutral-600 border-t-purple-500 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-purple-400 rounded-full animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+              <div className="w-16 h-16 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-b-blue-500 border-l-orange-400 rounded-full animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
             </div>
             
             <div className="space-y-2">
-              <p className="text-xl text-neutral-300">
-                Waking up the cosmos...
+              <p className="text-xl text-gray-700 font-semibold">
+                Initializing strategic systems...
               </p>
-              <p className="text-sm text-neutral-400">
+              <p className="text-sm text-gray-600">
                 This may take a moment on first startup
               </p>
             </div>
-            
-            {/* Animated dots */}
+          
             <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
-              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce shadow-lg" style={{animationDelay: '0ms'}}></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce shadow-lg" style={{animationDelay: '150ms'}}></div>
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce shadow-lg" style={{animationDelay: '300ms'}}></div>
             </div>
           </div>
         </div>
@@ -521,44 +515,45 @@ export default function App() {
   );
 
   return (
-    <div className="flex h-screen bg-background text-foreground font-sans antialiased dark">
-      <main className="flex-1 flex flex-col overflow-hidden w-full">
+    <div className="flex h-screen bg-background text-foreground font-sans antialiased dark relative overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden w-full relative z-10">
         <div className={`flex-1 overflow-y-auto ${(messages.length === 0 || isCheckingBackend) ? "flex" : ""}`}>
           {isCheckingBackend ? (
             <BackendLoadingScreen />
           ) : !isBackendReady ? (
             <div className="flex-1 flex flex-col items-center justify-center p-4">
-              <div className="text-center space-y-4">
-                <h2 className="text-2xl font-bold text-red-400">Oops! Hit a cosmic hiccup 🌙</h2>
-                <p className="text-neutral-300">
-                  Can't reach the cosmos right now. Let's try again?
+              <div className="w-full max-w-md bg-white/15 backdrop-blur-lg p-8 rounded-2xl border border-white/30 shadow-2xl text-center space-y-4">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Hit a creative roadblock. Let's pivot this idea and try again 🔄
+                </h2>
+                <p className="text-gray-600">
+                  Can't reach the backend right now. Let's try again?
                 </p>
                 <button 
                   onClick={() => window.location.reload()} 
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   Retry
                 </button>
               </div>
             </div>
           ) : messages.length === 0 ? (
-            <WelcomeScreen
-              handleSubmit={handleSubmit}
-              isLoading={isLoading}
-              onCancel={handleCancel}
-            />
+            <PageTransition isActive={messages.length === 0}>
+              <WelcomeScreen
+                handleSubmit={handleSubmit}
+                isLoading={isLoading}
+                onCancel={handleCancel}
+              />
+            </PageTransition>
           ) : (
-            <ChatMessagesView
-              messages={messages}
-              isLoading={isLoading}
-              scrollAreaRef={scrollAreaRef}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-              displayData={displayData}
-              messageEvents={messageEvents}
-              websiteCount={websiteCount}
-              agentName={agentName}
-            />
+            <PageTransition isActive={messages.length > 0}>
+              <ProgressDashboard
+                currentAgent={currentAgentRef.current}
+                messages={messages}
+                isLoading={isLoading}
+                onCancel={handleCancel}
+              />
+            </PageTransition>
           )}
         </div>
       </main>

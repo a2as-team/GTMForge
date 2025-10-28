@@ -33,37 +33,32 @@ from google.adk.tools import google_search
 from google.adk.tools.agent_tool import AgentTool
 from google.genai import types as genai_types
 from pydantic import BaseModel, Field
-from .agents.deep_research import (
-    market_research_wrapper,
-    express_market_research_wrapper,
-)
+from .agents.deep_research import express_research_wrapper
 from .agents.ideation_agent import ideation_agent
 from .agents.mockups_agent import mockups_agent
 from .agents.prd_agent import prd_agent
 from .agents.website_spec_agent import website_spec_agent
-from .agents.image_generation_agent import image_generation_agent
+from .agents.video_agent import video_agent
 from .config import config
 
-# parallel_task_agent = ParallelAgent(
-#     name="parallel_design_branch",
-#     description="Runs website specification and mockup generation in parallel.",
-#     sub_agents=[
-#         website_spec_agent,
-#         mockups_agent,
-#     ],
-# )
+parallel_task_agent = ParallelAgent(
+    name="parallel_design_branch",
+    description="Runs mockup generation and video creation in parallel.",
+    sub_agents=[
+        mockups_agent,
+        video_agent,
+    ],
+)
 
 workflow_root_agent = SequentialAgent(
     name="workflow_root_agent",
     description="Executes the end-to-end workflow for building a startup.",
     sub_agents=[
-        # market_research_wrapper,
-        express_market_research_wrapper,
+        express_research_wrapper,
         ideation_agent,
         website_spec_agent,
         prd_agent,
-        # mockups_agent,
-        image_generation_agent,
+        parallel_task_agent,
     ],
 )
 
@@ -73,6 +68,6 @@ root_agent = LlmAgent(
     description="The main agent for GTM Forge.",
     model=config.worker_model,
     global_instruction=config.prompts_config.persona,
-    instruction="Once the user provides a startup idea, execute the 'workflow_root_agent'to begin building a startup.",
+    instruction="Once the user provides a startup idea, execute the 'workflow_root_agent' to begin building a startup.",
     sub_agents=[workflow_root_agent],
 )

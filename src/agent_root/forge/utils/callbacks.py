@@ -105,6 +105,12 @@ def create_asset_save_callback(
                 f"key is missing or empty. Ensure the agent with "
                 f"output_key='{state_key}' ran successfully."
             )
+        
+        # Step 2.5: Convert dict/list to string if needed
+        if isinstance(content, (dict, list)):
+            import json
+            logging.info(f"Converting {state_key} from {type(content).__name__} to JSON string")
+            content = json.dumps(content, indent=2, ensure_ascii=False)
 
         # Step 3: Get session_id from invocation context
         session_id = callback_context._invocation_context.session.id
@@ -191,7 +197,7 @@ def create_image_extraction_callback(
         response.candidates[0].content.parts[].inline_data format.
     """
 
-    def callback(callback_context: CallbackContext) -> None:
+    def callback(callback_context: CallbackContext, llm_response=None) -> None:
         """Generated callback that extracts and saves image from model response."""
 
         # Step 1: Get current prompt metadata
@@ -203,8 +209,8 @@ def create_image_extraction_callback(
             return
 
         # Step 2: Extract image from model response
-        # The response is available in callback_context._last_response
-        response = callback_context._last_response
+        # The response is passed as a parameter
+        response = llm_response
         if not response:
             logging.error("No model response available. Cannot extract image.")
             return

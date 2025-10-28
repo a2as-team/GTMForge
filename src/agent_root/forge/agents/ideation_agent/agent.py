@@ -127,7 +127,7 @@ EXECUTIVE_SUMMARY_PARAGRAPH
 - 24-32s Call to Action: CTA_TEXT_AND_NARRATION
 
 ## Market Research Report
-{final_cited_research_report}
+{+final_cited_research_report}+
 """
 
 
