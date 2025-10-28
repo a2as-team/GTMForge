@@ -1,210 +1,255 @@
 """Mockups Agent
 
-Skeleton implementation for iterative UI mockup generation.
+Generates UI mockup images from PRD using gemini-2.5-flash-image model.
 """
 
 from __future__ import annotations
 
+import json
 import logging
-from collections.abc import AsyncGenerator
 from typing import Optional
 
-from google.adk.agents import BaseAgent, LlmAgent, LoopAgent, SequentialAgent
+from google.adk.agents import LlmAgent, LoopAgent, SequentialAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
+from google.adk.agents import BaseAgent
+from collections.abc import AsyncGenerator
 
 from pydantic import BaseModel, Field
 
 from forge.config import config
-from forge.utils.callbacks import create_asset_save_callback
+from forge.utils.callbacks import create_image_extraction_callback
 
 
-class MockupScreenTask(BaseModel):
-    """Represents a single UI screen generation request."""
+class MockupPrompt(BaseModel):
+    """Represents a single UI screen mockup prompt."""
 
-    name: str
-    prompt: str
-
-
-class MockupTasks(BaseModel):
-    """Structured payload describing all mockup screens to generate."""
-
-    tasks: list[MockupScreenTask] = Field(default_factory=list)
+    screen_name: str = Field(description="Name of the screen (e.g., 'Dashboard', 'Login')")
+    imagen_prompt: str = Field(description="Detailed Imagen prompt for generating the mockup")
+    index: int = Field(description="Order index of the screen in the user journey")
 
 
-def append_mockup_to_state_callback(callback_context: CallbackContext) -> None:
-    """Append the latest mockup output into session state.
+class MockupPromptsList(BaseModel):
+    """Structured list of all mockup prompts to generate."""
 
-    TODO: Extend to persist generated images via AssetService.
-    """
+    prompts: list[MockupPrompt] = Field(default_factory=list, description="List of mockup prompts extracted from PRD")
 
-    screen_markdown = callback_context.state.get("mockup_screen_markdown")
-    if not screen_markdown:
+
+class MockupResult(BaseModel):
+    """Result of a single mockup generation."""
+
+    screen_name: str
+    imagen_prompt: str
+    image_path: str
+    image_url: str
+    index: int
+
+
+class MockupsManifest(BaseModel):
+    """Complete manifest of all generated mockups."""
+
+    results: list[MockupResult] = Field(default_factory=list)
+    total_count: int = Field(default=0)
+
+
+def initialize_mockup_queue_callback(callback_context: CallbackContext) -> None:
+    """Initialize the mockup generation queue from extracted prompts."""
+    prompts_payload = callback_context.state.get("mockup_prompts_list")
+
+    if not prompts_payload:
+        logging.warning("[mockups_agent] No mockup prompts found in state.")
+        callback_context.state["mockup_queue"] = []
+        callback_context.state["mockup_results"] = []
         return
 
-    current_task = callback_context.state.pop("current_mockup_task", None)
-
-    completed = list(callback_context.state.get("completed_screens", []))
-    if current_task and current_task.get("name"):
-        completed.append(current_task["name"])
-    callback_context.state["completed_screens"] = completed
-
-    aggregated_brief = callback_context.state.get("mockups_brief")
-    if aggregated_brief:
-        aggregated_brief += "\n\n" + screen_markdown
+    # Extract prompts from Pydantic model or dict
+    if isinstance(prompts_payload, MockupPromptsList):
+        prompts = [p.model_dump() for p in prompts_payload.prompts]
     else:
-        aggregated_brief = screen_markdown
-    callback_context.state["mockups_brief"] = aggregated_brief
+        prompts = list(prompts_payload.get("prompts", []))
 
-    logging.info(
-        "[mockups_agent] Added screen to mockups brief. Completed screens: %s",
-        completed,
-    )
+    callback_context.state["mockup_queue"] = prompts
+    callback_context.state["mockup_results"] = []
+    logging.info(f"[mockups_agent] Initialized queue with {len(prompts)} prompts.")
 
 
-class MockupTaskLoader(BaseAgent):
-    """Loads the next mockup task from pending queue into state."""
+class MockupQueueLoader(BaseAgent):
+    """Pops the next mockup prompt from queue and sets it as current."""
 
     def __init__(self) -> None:
-        super().__init__(name="mockup_task_loader")
+        super().__init__(name="mockup_queue_loader")
 
     async def _run_async_impl(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         state = ctx.session.state
-        pending: list[dict] = list(state.get("mockup_pending_tasks", []))
+        queue: list[dict] = list(state.get("mockup_queue", []))
 
-        if not pending:
-            logging.info("[mockups_agent] No pending mockup tasks detected.")
+        if not queue:
+            logging.info("[mockups_agent] Queue is empty.")
             yield Event(author=self.name)
             return
 
-        current_task = pending.pop(0)
-        state["mockup_pending_tasks"] = pending
-        state["current_mockup_task"] = current_task
-        state["current_mockup_prompt"] = current_task.get("prompt", "")
+        current_prompt = queue.pop(0)
+        state["mockup_queue"] = queue
+        state["current_mockup_prompt"] = current_prompt
 
         logging.info(
-            "[mockups_agent] Loaded mockup task '%s'. Remaining: %d",
-            current_task.get("name", "Unnamed"),
-            len(pending),
+            f"[mockups_agent] Loaded prompt for '{current_prompt.get('screen_name', 'Unknown')}'. Remaining: {len(queue)}"
         )
 
         yield Event(author=self.name)
 
 
-class MockupsLoopTerminator(BaseAgent):
-    """Escalates to end the loop once all tasks are completed."""
+class MockupLoopTerminator(BaseAgent):
+    """Terminates the loop when all prompts have been processed."""
 
     def __init__(self) -> None:
-        super().__init__(name="mockups_loop_terminator")
+        super().__init__(name="mockup_loop_terminator")
 
     async def _run_async_impl(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         state = ctx.session.state
-        pending = state.get("mockup_pending_tasks", [])
-        current = state.get("current_mockup_task")
+        queue = state.get("mockup_queue", [])
+        current = state.get("current_mockup_prompt")
 
-        if pending or current:
+        if queue or current:
             yield Event(author=self.name)
             return
 
         logging.info(
-            "[mockups_agent] All mockup tasks completed. Escalating to stop loop."
+            "[mockups_agent] All mockups generated. Escalating to stop loop."
         )
         yield Event(author=self.name, actions=EventActions(escalate=True))
 
 
-mockups_generator_agent = LlmAgent(
-    name="mockups_generator_agent",
-    model=config.research_config.nano_banana_model,
-    description="Generates UI mockup details and prompts for a single screen.",
-    instruction="""
-    You are a UI mockup generator. Given a screen specification from a PRD, produce:
-    1. A concise description of the screen layout and interactions.
-    2. A generation-ready image prompt suitable for rendering the UI.
-    3. Any supplementary notes the design engineer should know.
-
-    Context for the screen is stored under the state key `current_mockup_task`.
-    Use the "name" and "prompt" fields to tailor your response.
-
-    Return output as structured markdown with sections:
-    # Screen
-    ## Description
-    ## Image Prompt
-    ## Notes
-    """,
-    output_key="mockup_screen_markdown",
-    after_agent_callback=append_mockup_to_state_callback,
-)
-
-
-def initialize_mockup_tasks_callback(callback_context: CallbackContext) -> None:
-    """Seed loop state with tasks extracted from the PRD."""
-
-    tasks_payload = callback_context.state.get("mockup_tasks")
-    if not tasks_payload:
-        logging.warning("[mockups_agent] No mockup tasks produced from PRD input.")
-        return
-
-    if isinstance(tasks_payload, MockupTasks):
-        raw_tasks = [task.model_dump() for task in tasks_payload.tasks]
-    else:
-        raw_tasks = list(tasks_payload.get("tasks", []))
-
-    callback_context.state["mockup_pending_tasks"] = raw_tasks
-    callback_context.state.setdefault("completed_screens", [])
-    callback_context.state.setdefault("mockups_brief", None)
-
-
-mockups_task_generator = LlmAgent(
-    name="mockups_task_generator",
+mockup_prompt_extractor = LlmAgent(
+    name="mockup_prompt_extractor",
     model=config.research_config.worker_model,
-    description="Parses the PRD to enumerate screens requiring UI mockups.",
+    description="Extracts Imagen mockup prompts from the PRD.",
     instruction="""
-    You are a product requirements analyst. Review the PRD provided in
-    `prd_markdown` and extract a list of screens that require UI mockups.
+    You are a Product Requirements Analyst specializing in extracting UI mockup specifications.
 
-    For each screen provide:
-      * `name`: a short human readable label (e.g., "Checkout - Payment")
-      * `prompt`: a detailed description and stylistic notes the mockup
-        generator should follow when producing the image and layout summary.
+    Your task is to analyze the Product Requirements Document (PRD) from the 'product_requirements_doc'
+    state key and extract ALL screen specifications that include Imagen mockup prompts.
 
-    Return the list as structured JSON conforming to the provided schema.
+    The PRD contains a "Screen Specifications" section (typically Section 5) where each screen has:
+    - Screen name/purpose
+    - User context and purpose
+    - UI components and layout
+    - **Imagen Mockup Prompt**: A detailed prompt for generating the UI mockup
+
+    For each screen specification, extract:
+    1. `screen_name`: The name of the screen (e.g., "Dashboard - Main Interface", "Onboarding - Welcome")
+    2. `imagen_prompt`: The EXACT Imagen mockup prompt text from the PRD (these are typically 120+ words)
+    3. `index`: The order number of the screen in the user journey (starting from 0)
+
+    IMPORTANT:
+    - Extract ALL screens that have Imagen prompts in the PRD
+    - Preserve the exact wording of the Imagen prompts - do NOT modify or summarize them
+    - Maintain the original order of screens as they appear in the PRD
+    - If a screen doesn't have an Imagen prompt, skip it
+
+    Return the extracted prompts as a structured list conforming to the MockupPromptsList schema.
     """,
-    output_schema=MockupTasks,
-    output_key="mockup_tasks",
+    output_schema=MockupPromptsList,
+    output_key="mockup_prompts_list",
+    before_agent_callback=initialize_mockup_queue_callback,
 )
 
 
-mockups_loop_agent = LoopAgent(
-    name="mockups_agent",
-    description="Iterates through PRD-defined screens to generate UI mockups.",
-    max_iterations=20,
+# Create the image extraction callback that will save images after generation
+save_mockup_image_callback = create_image_extraction_callback(
+    prompt_state_key="current_mockup_prompt",
+    asset_type="mockups",
+    results_state_key="mockup_results",
+)
+
+
+mockup_image_generator = LlmAgent(
+    name="mockup_image_generator",
+    model="gemini-2.0-flash-thinking-exp-01-21",  # Image generation model
+    description="Generates a single UI mockup image from an Imagen prompt.",
+    instruction="""
+    You are a UI mockup generator using Gemini's image generation capabilities.
+
+    The current mockup prompt is stored in the 'current_mockup_prompt' state key, which contains:
+    - screen_name: The name of the screen
+    - imagen_prompt: The detailed Imagen prompt for this screen
+    - index: The order of this screen
+
+    Your task is to generate a high-quality UI mockup image based on the 'imagen_prompt' field.
+
+    Use the detailed prompt to create a realistic, professional UI mockup that accurately represents:
+    - The screen layout and structure
+    - UI components and their arrangement
+    - Visual hierarchy and design aesthetic
+    - Color scheme and branding
+    - Realistic data and content
+
+    The generated image should be suitable for use in product documentation, presentations, and development references.
+    """,
+    after_model_callback=save_mockup_image_callback,
+)
+
+
+mockup_generation_loop = LoopAgent(
+    name="mockup_generation_loop",
+    description="Iterates through all mockup prompts and generates images sequentially.",
+    max_iterations=20,  # Safety limit
     sub_agents=[
-        MockupTaskLoader(),
-        mockups_generator_agent,
-        MockupsLoopTerminator(),
+        MockupQueueLoader(),
+        mockup_image_generator,
+        MockupLoopTerminator(),
     ],
 )
 
 
-save_mockups_callback = create_asset_save_callback(
-    state_key="mockups_brief",
-    asset_type="mockups",
-    filename="mockups_brief.md",
-)
+def save_mockups_manifest_callback(callback_context: CallbackContext) -> None:
+    """Saves the final mockups manifest to disk and state."""
+    results = callback_context.state.get("mockup_results", [])
+
+    if not results:
+        logging.warning("[mockups_agent] No mockup results to save.")
+        return
+
+    # Create manifest
+    manifest = MockupsManifest(
+        results=[MockupResult(**r) for r in results],
+        total_count=len(results),
+    )
+
+    # Save manifest as JSON
+    manifest_json = manifest.model_dump_json(indent=2)
+    callback_context.state["mockups_manifest"] = manifest_json
+
+    # Also save to asset server
+    session_id = callback_context._invocation_context.session.id
+    from forge.data_models import Assets, ReportAsset
+
+    assets = Assets(
+        session_id=session_id,
+        asset_type="mockups",
+        items=[ReportAsset(content=manifest_json, filename="mockups_manifest.json")],
+    )
+
+    saved_files = assets.save()
+    callback_context.state["mockups_manifest_url"] = saved_files[0]["url"]
+    callback_context.state["mockups_manifest_path"] = saved_files[0]["path"]
+
+    logging.info(
+        f"[mockups_agent] Saved manifest with {len(results)} mockups to {saved_files[0]['url']}"
+    )
 
 
 mockups_agent = SequentialAgent(
     name="mockups_agent",
-    description="Generates mockup tasks from a PRD then iterates to produce UI mockups.",
+    description="Extracts mockup prompts from PRD and generates UI mockup images using gemini-2.5-flash-image.",
     sub_agents=[
-        mockups_task_generator,
-        mockups_loop_agent,
+        mockup_prompt_extractor,
+        mockup_generation_loop,
     ],
-    before_agent_callback=initialize_mockup_tasks_callback,
-    after_agent_callback=save_mockups_callback,
+    after_agent_callback=save_mockups_manifest_callback,
 )
