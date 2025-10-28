@@ -1,5 +1,5 @@
-"""Product Requirements Document (PRD) Agent for GTMForge."""
+"""Image Generation Agent for GTMForge."""
 
-from .agent import prd_agent
+from .agent import image_generation_agent
 
-__all__ = ["prd_agent"]
+__all__ = ["image_generation_agent"]

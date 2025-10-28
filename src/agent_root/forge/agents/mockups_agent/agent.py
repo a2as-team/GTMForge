@@ -156,7 +156,7 @@ mockup_prompt_extractor = LlmAgent(
     """,
     output_schema=MockupPromptsList,
     output_key="mockup_prompts_list",
-    before_agent_callback=initialize_mockup_queue_callback,
+    after_agent_callback=initialize_mockup_queue_callback,
 )
 
 
@@ -170,7 +170,7 @@ save_mockup_image_callback = create_image_extraction_callback(
 
 mockup_image_generator = LlmAgent(
     name="mockup_image_generator",
-    model="gemini-2.0-flash-thinking-exp-01-21",  # Image generation model
+    model=config.image_generation_model,
     description="Generates a single UI mockup image from an Imagen prompt.",
     instruction="""
     You are a UI mockup generator using Gemini's image generation capabilities.

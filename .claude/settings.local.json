@@ -23,7 +23,9 @@
       "Bash(tree -L 3 src/agent_root/forge/agents/prd_agent)",
       "WebFetch(domain:ai.google.dev)",
       "Bash(curl -s \"https://ai.google.dev/api/models\")",
-      "Bash(python -m py_compile src/agent_root/forge/agents/mockups_agent/agent.py)"
+      "Bash(python -m py_compile src/agent_root/forge/agents/mockups_agent/agent.py)",
+      "Bash(python -m py_compile src/agent_root/forge/agents/image_generation_agent/agent.py)",
+      "Bash(python -m py_compile src/agent_root/forge/agents/image_generation_agent/__init__.py)"
     ],
     "deny": [],
     "ask": []
