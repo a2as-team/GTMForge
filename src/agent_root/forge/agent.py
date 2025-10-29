@@ -43,6 +43,7 @@ from .agents.prd_agent import prd_agent
 from .agents.website_spec_agent import website_spec_agent
 from .agents.video_agent import video_agent
 from .agents.image_generation_agent import image_generation_agent
+from .agents.website_generator_agent import website_generator_agent
 from .config import config
 
 parallel_design_agent = ParallelAgent(
@@ -52,8 +53,8 @@ parallel_design_agent = ParallelAgent(
         mockups_agent,
         video_agent,
         website_spec_agent,
-        videogen_agent,
         image_generation_agent,
+        # videogen_agent,
     ],
 )
 

@@ -267,6 +267,9 @@ Website Specification:
 Logo URL:
 {generated_image_url}
 
+Videos:
+{final_video_output}
+
 ---
 
 Generate the complete HTML now. Output ONLY the HTML code with no additional explanation or markdown formatting. The output should be a valid, complete HTML document ready to save as index.html.
