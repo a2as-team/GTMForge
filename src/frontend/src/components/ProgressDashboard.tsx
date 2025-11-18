@@ -56,6 +56,7 @@ interface ProgressDashboardProps {
   isLoading: boolean;
   onCancel: () => void;
   sessionId?: string;
+  onComplete: () => void;
 }
 
 export function ProgressDashboard({
@@ -64,6 +65,7 @@ export function ProgressDashboard({
   isLoading,
   onCancel,
   sessionId,
+  onComplete,
 }: ProgressDashboardProps) {
   const [stageStatuses, setStageStatuses] = useState<Record<number, StageStatus>>(
     Object.fromEntries(STAGES.map((s) => [s.id, "pending" as StageStatus]))
@@ -85,7 +87,7 @@ export function ProgressDashboard({
 
   // Update stage statuses based on current agent
   useEffect(() => {
-    if (!currentAgent && !isLoading) {
+    if (!isLoading) {
       // All done
       const newStatuses = { ...stageStatuses };
       STAGES.forEach((stage) => {
@@ -101,7 +103,7 @@ export function ProgressDashboard({
       const activeStageId = getCurrentStage(currentAgent);
       if (activeStageId) {
         const newStatuses = { ...stageStatuses };
-        
+
         // Mark previous stages as complete
         for (let i = 1; i < activeStageId; i++) {
           if (newStatuses[i] !== "complete") {
@@ -109,21 +111,23 @@ export function ProgressDashboard({
             setCompletedStages((prev) => new Set([...prev, i]));
           }
         }
-        
+
         // Mark current stage as in-progress
         newStatuses[activeStageId] = "in-progress";
-        
+
         // Keep future stages as pending
         for (let i = activeStageId + 1; i <= STAGES.length; i++) {
           if (newStatuses[i] === "pending") {
             newStatuses[i] = "pending";
           }
         }
-        
+
         setStageStatuses(newStatuses);
       }
     }
   }, [currentAgent, isLoading]);
+
+
 
   // Extract artifacts from messages
   useEffect(() => {
@@ -136,10 +140,10 @@ export function ProgressDashboard({
         // Look for asset URLs in message content
         const urlRegex = /http:\/\/localhost:8550\/[^\s)]+/g;
         const urls = msg.content.match(urlRegex) || [];
-        
+
         urls.forEach((url) => {
           let artifactType: Artifact["type"] = "document";
-          let artifactName = "Asset"; 
+          let artifactName = "Asset";
           let stageId = 1;
 
           // Determine artifact type and stage from URL
@@ -194,6 +198,16 @@ export function ProgressDashboard({
     return (completed / STAGES.length) * 100;
   })();
 
+  // Trigger onComplete when all stages are done
+  useEffect(() => {
+    if (overallProgress === 100 && !isLoading) {
+      const timer = setTimeout(() => {
+        onComplete();
+      }, 3000); // Wait 3 seconds before switching to chat
+      return () => clearTimeout(timer);
+    }
+  }, [overallProgress, isLoading, onComplete]);
+
   const estimatedTimeRemaining = (() => {
     const completedCount = Array.from(completedStages).length;
     const remaining = STAGES.length - completedCount;
@@ -215,10 +229,10 @@ export function ProgressDashboard({
           <p className="text-gray-600 mb-4">
             Building your startup assets...
           </p>
-          
+
           {/* Overall Progress */}
           <ProgressBar progress={overallProgress} className="mb-2" />
-          
+
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
               {Array.from(completedStages).length} of {STAGES.length} stages complete

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { ProgressDashboard } from "@/components/ProgressDashboard";
+import { ChatMessagesView } from "@/components/ChatMessagesView";
 import PageTransition from "@/components/animations/PageTransition";
 
 // Update DisplayData to be a string type
@@ -36,6 +37,7 @@ export default function App() {
   const currentAgentRef = useRef('');
   const accumulatedTextRef = useRef("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [showChat, setShowChat] = useState(false);
 
   const retryWithBackoff = useCallback(async (
     fn: () => Promise<unknown>,
@@ -44,12 +46,12 @@ export default function App() {
   ): Promise<unknown> => {
     const startTime = Date.now();
     let lastError: Error;
-    
+
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       if (Date.now() - startTime > maxDuration) {
         throw new Error(`Retry timeout after ${maxDuration}ms`);
       }
-      
+
       try {
         return await fn();
       } catch (error) {
@@ -59,11 +61,11 @@ export default function App() {
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
+
     throw lastError!;
   }, []);
 
-  const createSession = useCallback(async (): Promise<{userId: string, sessionId: string, appName: string}> => {
+  const createSession = useCallback(async (): Promise<{ userId: string, sessionId: string, appName: string }> => {
     const generatedSessionId = uuidv4();
     const response = await fetch(`/api/apps/${agentName}/users/u_999/sessions/${generatedSessionId}`, {
       method: "POST",
@@ -71,11 +73,11 @@ export default function App() {
         "Content-Type": "application/json"
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to create session: ${response.status} ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return {
       userId: data.userId,
@@ -118,13 +120,13 @@ export default function App() {
         textParts = parsed.content.parts
           .filter((part: { text?: string }) => part.text)
           .map((part: { text: string }) => part.text);
-        
+
         // Check for function calls
         const functionCallPart = parsed.content.parts.find((part: { functionCall?: unknown }) => part.functionCall);
         if (functionCallPart) {
           functionCall = functionCallPart.functionCall;
         }
-        
+
         // Check for function responses
         const functionResponsePart = parsed.content.parts.find((part: { functionResponse?: unknown }) => part.functionResponse);
         if (functionResponsePart) {
@@ -274,14 +276,14 @@ export default function App() {
       let currentUserId = userId;
       let currentSessionId = sessionId;
       let currentAppName = appName;
-      
+
       if (!currentSessionId || !currentUserId || !currentAppName) {
         console.log('Creating new session...');
         const sessionData = await retryWithBackoff(createSession) as { userId: string; sessionId: string; appName: string };
         currentUserId = sessionData.userId;
         currentSessionId = sessionData.sessionId;
         currentAppName = sessionData.appName;
-        
+
         setUserId(currentUserId);
         setSessionId(currentSessionId);
         setAppName(currentAppName);
@@ -351,7 +353,7 @@ export default function App() {
         if (!response.ok) {
           throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
         }
-        
+
         return response;
       };
 
@@ -360,7 +362,7 @@ export default function App() {
       // Handle SSE streaming
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let lineBuffer = ""; 
+      let lineBuffer = "";
       let eventDataBuffer = "";
 
       if (reader) {
@@ -370,7 +372,7 @@ export default function App() {
           if (value) {
             lineBuffer += decoder.decode(value, { stream: true });
           }
-          
+
           let eolIndex;
           // Process all complete lines in the buffer, or the remaining buffer if 'done'
           while ((eolIndex = lineBuffer.indexOf('\n')) >= 0 || (done && lineBuffer.length > 0)) {
@@ -403,7 +405,7 @@ export default function App() {
             // (e.g., stream ended after data lines but before an empty line delimiter)
             if (eventDataBuffer.length > 0) {
               const jsonDataToParse = eventDataBuffer.endsWith('\n') ? eventDataBuffer.slice(0, -1) : eventDataBuffer;
-              console.log('[SSE DISPATCH FINAL EVENT]:', jsonDataToParse.substring(0,200) + "..."); // DEBUG
+              console.log('[SSE DISPATCH FINAL EVENT]:', jsonDataToParse.substring(0, 200) + "..."); // DEBUG
               processSseEventData(jsonDataToParse, aiMessageId);
               eventDataBuffer = ""; // Clear buffer
             }
@@ -412,16 +414,17 @@ export default function App() {
         }
       }
 
+      currentAgentRef.current = '';
       setIsLoading(false);
 
     } catch (error) {
       console.error("Error:", error);
       // Update the AI message placeholder with an error message
       const aiMessageId = Date.now().toString() + "_ai_error";
-      setMessages(prev => [...prev, { 
-        type: "ai", 
-        content: `Sorry, there was an error processing your request: ${error instanceof Error ? error.message : 'Unknown error'}`, 
-        id: aiMessageId 
+      setMessages(prev => [...prev, {
+        type: "ai",
+        content: `Sorry, there was an error processing your request: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        id: aiMessageId
       }]);
       setIsLoading(false);
     }
@@ -441,11 +444,11 @@ export default function App() {
   useEffect(() => {
     const checkBackend = async () => {
       setIsCheckingBackend(true);
-      
+
       // Check if backend is ready with retry logic
       const maxAttempts = 60; // 2 minutes with 2-second intervals
       let attempts = 0;
-      
+
       while (attempts < maxAttempts) {
         const isReady = await checkBackendHealth();
         if (isReady) {
@@ -453,16 +456,16 @@ export default function App() {
           setIsCheckingBackend(false);
           return;
         }
-        
+
         attempts++;
         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds between checks
       }
-      
+
       // If we get here, backend didn't come up in time
       setIsCheckingBackend(false);
       console.error("Backend failed to start within 2 minutes");
     };
-    
+
     checkBackend();
   }, []);
 
@@ -479,21 +482,21 @@ export default function App() {
   const BackendLoadingScreen = () => (
     <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">
       <div className="w-full max-w-2xl z-10 bg-white/15 backdrop-blur-lg p-8 rounded-2xl border border-white/30 shadow-2xl animate-glow-pulse">
-        
+
         <div className="text-center space-y-6">
           <h1 className="text-4xl font-bold flex items-center justify-center gap-3">
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient-flow" style={{backgroundSize: '200% 200%'}}>
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient-flow" style={{ backgroundSize: '200% 200%' }}>
               GTMForge
             </span>
           </h1>
-          
+
           <div className="flex flex-col items-center space-y-4">
 
             <div className="relative">
               <div className="w-16 h-16 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-b-blue-500 border-l-orange-400 rounded-full animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-b-blue-500 border-l-orange-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xl text-gray-700 font-semibold">
                 Initializing strategic systems...
@@ -502,11 +505,11 @@ export default function App() {
                 This may take a moment on first startup
               </p>
             </div>
-          
+
             <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce shadow-lg" style={{animationDelay: '0ms'}}></div>
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce shadow-lg" style={{animationDelay: '150ms'}}></div>
-              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce shadow-lg" style={{animationDelay: '300ms'}}></div>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce shadow-lg" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce shadow-lg" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce shadow-lg" style={{ animationDelay: '300ms' }}></div>
             </div>
           </div>
         </div>
@@ -529,8 +532,8 @@ export default function App() {
                 <p className="text-gray-600">
                   Can't reach the backend right now. Let's try again?
                 </p>
-                <button 
-                  onClick={() => window.location.reload()} 
+                <button
+                  onClick={() => window.location.reload()}
                   className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   Retry
@@ -545,6 +548,20 @@ export default function App() {
                 onCancel={handleCancel}
               />
             </PageTransition>
+          ) : showChat ? (
+            <PageTransition isActive={showChat}>
+              <ChatMessagesView
+                messages={messages}
+                isLoading={isLoading}
+                scrollAreaRef={scrollAreaRef}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+                displayData={displayData}
+                messageEvents={messageEvents}
+                websiteCount={websiteCount}
+                agentName={agentName}
+              />
+            </PageTransition>
           ) : (
             <PageTransition isActive={messages.length > 0}>
               <ProgressDashboard
@@ -553,6 +570,7 @@ export default function App() {
                 isLoading={isLoading}
                 onCancel={handleCancel}
                 sessionId={sessionId || undefined}
+                onComplete={() => setShowChat(true)}
               />
             </PageTransition>
           )}
