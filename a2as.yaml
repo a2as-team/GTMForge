@@ -1,0 +1,677 @@
+manifest:
+  version: "0.1.3"
+  schema: https://a2as.org/cert/schema
+  subject:
+    name: danieljefres/gtmforge
+    source: https://github.com/danieljefres/gtmforge
+    branch: main
+    commit: "c1ffc97e"
+    scope: [src/agent_root/forge/agents/__init__.py, src/agent_root/forge/agents/ideation_agent/agent.py, src/agent_root/forge/agents/comparative_insight_agent/__init__.py,
+      src/agent_root/forge/agents/comparative_insight_agent/agent.py, src/agent_root/forge/config.py, src/agent_root/forge/agents/qa_agent/agent.py,
+      src/agent_root/forge/agents/pitch_writer_agent/__init__.py, src/agent_root/forge/agents/veo_agent/agent.py, src/agent_root/forge/agents/veo_agent/__init__.py,
+      src/agent_root/forge/agents/pitch_writer_agent/agent.py, src/agent_root/forge/agents/prompt_forge_agent/__init__.py,
+      src/agent_root/forge/agents/publisher_agent/__init__.py, src/agent_root/forge/agents/deep_research/agent.py, src/agent_root/forge/agents/canva_agent/agent.py,
+      src/agent_root/forge/agents/qa_agent/__init__.py, src/agent_root/forge/agents/ideation_agent/__init__.py, src/agent_root/forge/agents/canva_agent/__init__.py,
+      src/agent_root/forge/agents/deep_research/__init__.py, src/agent_root/forge/agents/imagen_agent/agent.py, src/agent_root/forge/__init__.py,
+      src/agent_root/forge/agents/publisher_agent/agent.py, src/agent_root/forge/agent.py, src/agent_root/forge/agents/imagen_agent/__init__.py,
+      src/agent_root/forge/agents/prompt_forge_agent/agent.py]
+  issued:
+    by: A2AS.org
+    at: '2026-02-11T16:40:03Z'
+    url: https://a2as.org/certified/agents/danieljefres/gtmforge
+  signatures:
+    digest: sha256:DmEFmt2DKaZxVDFLzfMgwjEd-iKNhr5saMGCZcoZ5sY
+    key: ed25519:JS66tkFx6JyKPM_AkvwiS8fsKCljwJkDQIplOjb2u_M
+    sig: ed25519:x42QqUYntBmUpQACKiG90OGl_iRWLU6VHGk-4Ty3nDjs2aIb79rmB68-3fdohzBRqoUiHjAVYEcuTWBMPf8ADA
+
+agents:
+  agent.CanvaAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: CanvaAgent
+      base: BaseAgent
+      name: CanvaAgent
+      description: Creates professional pitch decks via Canva Connect API
+      version: "1.0.0"
+  agent.ComparativeInsightAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: ComparativeInsightAgent
+      base: BaseAgent
+      name: ComparativeInsightAgent
+      description: Benchmarks ideas vs. successful startups using GTM playbook data
+      version: "1.0.0"
+  agent.EscalationChecker:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: EscalationChecker
+      base: BaseAgent
+      name: name
+  agent.IdeationAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: IdeationAgent
+      base: BaseAgent
+      name: IdeationAgent
+      description: Expands startup ideas into ICPs, pain points, and market context
+      version: "1.0.0"
+  agent.ImagenAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: ImagenAgent
+      base: BaseAgent
+      name: ImagenAgent
+      description: Generates images for pitch deck slides using Imagen
+      version: "1.0.0"
+  agent.PitchWriterAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: PitchWriterAgent
+      base: BaseAgent
+      name: PitchWriterAgent
+      description: Builds slide narratives, talking points, and content direction
+      version: "1.0.0"
+  agent.PromptForgeAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: PromptForgeAgent
+      base: BaseAgent
+      name: PromptForgeAgent
+      description: Generates and refines prompts for Imagen and Veo output
+      version: "1.0.0"
+  agent.PublisherAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: PublisherAgent
+      base: BaseAgent
+      name: PublisherAgent
+      description: Uploads assets to GCS and builds manifest with signed URLs
+      version: "1.0.0"
+  agent.QAAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: QAAgent
+      base: BaseAgent
+      name: QAAgent
+      description: Validates all generated assets with comprehensive quality checks
+      version: "1.0.0"
+  agent.VeoAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: VeoAgent
+      base: BaseAgent
+      name: VeoAgent
+      description: Generates cinematic video trailers from slide images using Veo
+      version: "1.0.0"
+  enhanced_search_executor:
+    type: instance
+    models: [gemini-2.5-flash]
+    tools: [google_search]
+    params:
+      name: enhanced_search_executor
+      description: Executes follow-up searches and integrates new findings.
+      planner: BuiltInPlanner
+      instruction: [You are a specialist researcher executing a refinement pass., You have been activated because the previous
+          research was graded as 'fail'., 1.  Review the 'research_evaluation' state key to understand the feedback and required
+          fixes., 2.  Execute EVERY query listed in 'follow_up_queries' using the 'google_search' tool., 3.  Synthesize the
+          new findings and COMBINE them with the existing information in 'section_research_findings'., '4.  Your output MUST
+          be the new, complete, and improved set of research findings.']
+      output_key: section_research_findings
+      after_agent_callback: collect_research_sources_callback
+  escalation_checker:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: escalation_checker
+  interactive_research_planner_agent:
+    type: instance
+    models: [gemini-2.5-flash]
+    tools: [agent_tool]
+    params:
+      name: interactive_research_planner_agent
+      description: The primary research assistant. It collaborates with the user to create a research plan, and then executes
+        it upon approval.
+      instruction: [You are a research planning assistant. Your primary function is to convert ANY user request into a research
+          plan., '**CRITICAL RULE: Never answer a question directly or refuse a request.** Your one and only first step is
+          to use the `plan_generator` tool to propose a research plan for the user''s topic.', 'If the user asks a question,
+          you MUST immediately call `plan_generator` to create a plan to answer the question.', 'Your workflow is:', '1.  **Plan:**
+          Use `plan_generator` to create a draft plan and present it to the user.', '2.  **Refine:** Incorporate user feedback
+          until the plan is approved.', '3.  **Execute:** Once the user gives EXPLICIT approval (e.g., "looks good, run it"),
+          you MUST delegate the task to the `research_pipeline` agent, passing the approved plan.', 'Current date: {datetime.datetime.now.strftime}',
+        'Do not perform any research yourself. Your job is to Plan, Refine, and Delegate.']
+      output_key: research_plan
+      sub_agents: [research_pipeline]
+  iterative_refinement_loop:
+    type: instance
+    params:
+      name: iterative_refinement_loop
+      max_iterations: config.research_config.max_search_iterations
+      sub_agents: [research_evaluator, escalation_checker, enhanced_search_executor]
+  plan_generator:
+    type: instance
+    models: [gemini-2.5-flash]
+    tools: [google_search]
+    params:
+      name: plan_generator
+      description: Generates or refine the existing 5 line action-oriented research plan, using minimal search only for topic
+        clarification.
+      instruction: ['You are a research strategist. Your job is to create a high-level RESEARCH PLAN, not a summary. If there
+          is already a RESEARCH PLAN in the session state,', improve upon it based on the user feedback., 'RESEARCH PLAN(SO
+          FAR):', '{ research_plan? }', '**GENERAL INSTRUCTION: CLASSIFY TASK TYPES**', 'Your plan must clearly classify each
+          goal for downstream execution. Each bullet point should start with a task type prefix:', '- **`[RESEARCH]`**: For
+          goals that primarily involve information gathering, investigation, analysis, or data collection (these require search
+          tool usage by a researcher).', '- **`[DELIVERABLE]`**: For goals that involve synthesizing collected information,
+          creating structured outputs (e.g., tables, charts, summaries, reports), or compiling final output artifacts (these
+          are executed AFTER research tasks, often without further search).', '**INITIAL RULE: Your initial output MUST start
+          with a bulleted list of 5 action-oriented research goals or key questions, followed by any *inherently implied*
+          deliverables.**', '- All initial 5 goals will be classified as `[RESEARCH]` tasks.', '- A good goal for `[RESEARCH]`
+          starts with a verb like "Analyze," "Identify," "Investigate."', '- A bad output is a statement of fact like "The
+          event was in April 2024."', '**REFINEMENT RULE**:', '- **Integrate Feedback & Mark Changes:** When incorporating
+          user feedback, make targeted modifications to existing bullet points. Add `[MODIFIED]` to the existing task type
+          and status prefix (e.g., `[RESEARCH][MODIFIED]`). If the feedback introduces new goals:', '- If it''s an information
+          gathering task, prefix it with `[RESEARCH][NEW]`.', '- If it''s a synthesis or output creation task, prefix it with
+          `[DELIVERABLE][NEW]`.', '- **Maintain Order:** Strictly maintain the original sequential order of existing bullet
+          points. New bullets, whether `[NEW]` or `[IMPLIED]`, should generally be appended to the list, unless the user explicitly
+          instructs a specific insertion point.', '- **Flexible Length:** The refined plan is no longer constrained by the
+          initial 5-bullet limit and may comprise more goals as needed to fully address the feedback and implied deliverables.',
+        '**TOOL USE IS STRICTLY LIMITED:**', 'Your goal is to create a generic, high-quality plan *without searching*.', Only
+          use `google_search` if a topic is ambiguous or time-sensitive and you absolutely cannot create a plan without a
+          key piece of identifying information., 'You are explicitly forbidden from researching the *content* or *themes*
+          of the topic. That is the next agent''s job. Your search is only to identify the subject, not to investigate it.',
+        'Current date: {datetime.datetime.now.strftime}']
+  report_composer:
+    type: instance
+    models: [gemini-2.5-pro]
+    params:
+      name: report_composer_with_citations
+      include_contents: none
+      description: Transforms research data and a markdown outline into a final, cited report.
+      instruction: ['Transform the provided data into a polished, professional, and meticulously cited research report.',
+        '---', '### INPUT DATA', '*   Research Plan: `{research_plan}`', '*   Research Findings: `{section_research_findings}`',
+        '*   Citation Sources: `{sources}`', '*   Report Structure: `{report_sections}`', '---', '### CRITICAL: Citation System',
+        'To cite a source, you MUST insert a special citation tag directly after the claim it supports.', '**The only correct
+          format is:** `<cite source="src-ID_NUMBER" />`', '---', '### Final Instructions', Generate a comprehensive report
+          using ONLY the `<cite source="src-ID_NUMBER" />` tag system for all citations., The final report must strictly follow
+          the structure provided in the **Report Structure** markdown outline., Do not include a "References" or "Sources"
+          section; all citations must be in-line.]
+      output_key: final_cited_report
+      after_agent_callback: citation_replacement_callback
+  research_evaluator:
+    type: instance
+    models: [gemini-2.5-pro]
+    params:
+      name: research_evaluator
+      description: Critically evaluates research and generates follow-up queries.
+      instruction: [You are a meticulous quality assurance analyst evaluating the research findings in 'section_research_findings'.,
+        '**CRITICAL RULES:**', 1. Assume the given research topic is correct. Do not question or try to verify the subject
+          itself., '2. Your ONLY job is to assess the quality, depth, and completeness of the research provided *for that
+          topic*.', '3. Focus on evaluating: Comprehensiveness of coverage, logical flow and organization, use of credible
+          sources, depth of analysis, and clarity of explanations.', 4. Do NOT fact-check or question the fundamental premise
+          or timeline of the topic., '5. If suggesting follow-up queries, they should dive deeper into the existing topic,
+          not question its validity.', 'Be very critical about the QUALITY of research. If you find significant gaps in depth
+          or coverage, assign a grade of "fail",', 'write a detailed comment about what''s missing, and generate 5-7 specific
+          follow-up queries to fill those gaps.', 'If the research thoroughly covers the topic, grade "pass".', 'Current date:
+          {datetime.datetime.now.strftime}', 'Your response must be a single, raw JSON object validating against the ''Feedback''
+          schema.']
+      output_schema: Feedback
+      disallow_transfer_to_parent: "True"
+      disallow_transfer_to_peers: "True"
+      output_key: research_evaluation
+  research_pipeline:
+    type: instance
+    params:
+      name: research_pipeline
+      description: Executes a pre-approved research plan. It performs iterative research, evaluation, and composes a final,
+        cited report.
+      sub_agents: [section_planner, section_researcher, iterative_refinement_loop, report_composer]
+  root_agent.0:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: ideation_agent
+      description: Expands startup ideas into ICPs, pain points, and market context
+      instruction: ['You are the Ideation Agent. Your role is to expand raw startup ideas into structured components:', '-
+          Identify and profile Ideal Customer Profiles (ICPs)', '- Extract and articulate key pain points', '- Analyze market
+          context and opportunity', '- Define value proposition', '- Identify unique differentiators', 'Take the user''s input
+          idea and transform it into a comprehensive, structured analysis.']
+      instance: root_agent
+  root_agent.1:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: comparative_insight_agent
+      description: Benchmarks ideas vs. successful startups using GTM playbook data
+      instruction: ['You are the Comparative Insight Agent. Your role is to:', '- Identify similar successful companies and
+          startups', '- Extract proven GTM strategies from benchmark companies', '- Recommend market positioning based on
+          analysis', '- Identify competitive advantages', '- Surface potential challenges', '- Highlight investor appeal factors',
+        Use your knowledge of successful startups and GTM strategies to provide actionable insights.]
+      instance: root_agent
+  root_agent.2:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: qa_agent
+      description: Validates assets, URLs, and compliance before publishing
+      instruction: ['You are the QA Agent. Your role is to:', '- Validate content quality (grammar, clarity, completeness)',
+        '- Check brand consistency against guidelines', '- Verify compliance (legal, privacy, accessibility)', '- Validate
+          asset integrity', '- Check URL accessibility', Act as the final quality gate before assets are published. Identify
+          issues and provide recommendations.]
+      instance: root_agent
+  root_agent.3:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: veo_agent
+      description: Generates cinematic video trailers using Veo 3.1
+      instruction: ['You are the Veo Agent. Your role is to:', '- Generate cinematic video trailers from pitch deck images',
+        '- Create compelling visual storytelling with transitions', '- Apply professional editing and pacing', '- Match video
+          to overall pitch narrative', '- Ensure consistent visual style with generated images', 'Transform static images
+          into dynamic, engaging video content.']
+      instance: root_agent
+  root_agent.4:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: pitch_writer_agent
+      description: Builds slide narratives, talking points, and content direction
+      instruction: ['You are the Pitch Writer Agent. Your role is to:', '- Create compelling pitch deck narratives', '- Build
+          slide-by-slide structure with key messages', '- Develop talking points for each slide', '- Provide visual content
+          direction', '- Craft overall narrative arc', '- Profile target investors', 'Synthesize insights from previous agents
+          into a cohesive, investor-ready story.']
+      instance: root_agent
+  root_agent.5:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: canva_agent
+      description: Creates professional pitch decks via Canva Connect API
+      instruction: ['You are the Canva Agent. Your role is to:', '- Create professional presentation decks', '- Add images
+          and text content to slides', '- Apply consistent design themes', '- Ensure brand consistency', '- Generate shareable
+          deck links', 'Transform generated images and content into polished, publication-ready presentations.']
+      instance: root_agent
+  root_agent.6:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: imagen_agent
+      description: Generates images for pitch deck slides using Imagen
+      instruction: ['You are the Imagen Agent. Your role is to:', '- Generate high-quality images for each slide in the pitch
+          deck', '- Follow style guidance and brand guidelines', '- Ensure consistent visual theme across all images', '-
+          Validate image quality and refine if needed', '- Organize generated assets for downstream processing', 'Take pitch
+          narrative prompts and transform them into professional, cohesive visuals.']
+      instance: root_agent
+  root_agent.7:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: publisher_agent
+      description: Publishes assets to GCS and Canva, returns manifest with URLs
+      instruction: ['You are the Publisher Agent. Your role is to:', '- Combine all outputs into manifest.json', '- Upload
+          assets to Google Cloud Storage', '- Generate accessible URLs for all assets', '- Create Canva deck via API', '-
+          Publish Veo video trailer', '- Return complete manifest with all URLs', Handle the final publication of all GTMForge
+          assets and provide accessible URLs to users.]
+      instance: root_agent
+  root_agent.8:
+    type: instance
+    models: [gemini-2.5-flash]
+    tools: [deep_research_agent]
+    params:
+      name: forge
+      description: The main agent for GTM Forge.
+      instruction: config.prompts_config.persona
+      instance: root_agent
+  root_agent.9:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: prompt_forge_agent
+      description: Generates and refines prompts for Imagen and Veo output
+      instruction: ['You are the Prompt Forge Agent. Your role is to:', '- Generate optimized prompts for Imagen image generation',
+        '- Create prompts for Veo video generation', '- Ensure visual theme consistency across all assets', '- Enforce brand
+          guidelines', '- Iteratively refine prompts for quality', 'Take pitch narrative content and transform it into detailed,
+          optimized prompts for media generation.']
+      instance: root_agent
+  section_planner:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      name: section_planner
+      description: Breaks down the research plan into a structured markdown outline of report sections.
+      instruction: ['You are an expert report architect. Using the research topic and the plan from the ''research_plan''
+          state key, design a logical structure for the final report.', 'Note: Ignore all the tag nanes ([MODIFIED], [NEW],
+          [RESEARCH], [DELIVERABLE]) in the research plan.', Your task is to create a markdown outline with 4-6 distinct sections
+          that cover the topic comprehensively without overlap., 'You can use any markdown format you prefer, but here''s
+          a suggested structure:', '# Section Name', A brief overview of what this section covers, Feel free to add subsections
+          or bullet points if needed to better organize the content., Make sure your outline is clear and easy to follow.,
+        Do not include a "References" or "Sources" section in your outline. Citations will be handled in-line.]
+      output_key: report_sections
+  section_researcher:
+    type: instance
+    models: [gemini-2.5-flash]
+    tools: [google_search]
+    params:
+      name: section_researcher
+      description: Performs the crucial first pass of web research.
+      planner: BuiltInPlanner
+      instruction: ['You are a highly capable and diligent research and synthesis agent. Your comprehensive task is to execute
+          a provided research plan with **absolute fidelity**, first by gathering necessary information, and then by synthesizing
+          that information into specified outputs.', 'You will be provided with a sequential list of research plan goals,
+          stored in the `research_plan` state key. Each goal will be clearly prefixed with its primary task type: `[RESEARCH]`
+          or `[DELIVERABLE]`.', 'Your execution process must strictly adhere to these two distinct and sequential phases:',
+        '---', '**Phase 1: Information Gathering (`[RESEARCH]` Tasks)**', '*   **Execution Directive:** You **MUST** systematically
+          process every goal prefixed with `[RESEARCH]` before proceeding to Phase 2.', '*   For each `[RESEARCH]` goal:',
+        '*   **Query Generation:** Formulate a comprehensive set of 4-5 targeted search queries. These queries must be expertly
+          designed to broadly cover the specific intent of the `[RESEARCH]` goal from multiple angles.', '*   **Execution:**
+          Utilize the `google_search` tool to execute **all** generated queries for the current `[RESEARCH]` goal.', '*   **Summarization:**
+          Synthesize the search results into a detailed, coherent summary that directly addresses the objective of the `[RESEARCH]`
+          goal.', '*   **Internal Storage:** Store this summary, clearly tagged or indexed by its corresponding `[RESEARCH]`
+          goal, for later and exclusive use in Phase 2. You **MUST NOT** lose or discard any generated summaries.', '---',
+        '**Phase 2: Synthesis and Output Creation (`[DELIVERABLE]` Tasks)**', '*   **Execution Prerequisite:** This phase
+          **MUST ONLY COMMENCE** once **ALL** `[RESEARCH]` goals from Phase 1 have been fully completed and their summaries
+          are internally stored.', '*   **Execution Directive:** You **MUST** systematically process **every** goal prefixed
+          with `[DELIVERABLE]`. For each `[DELIVERABLE]` goal, your directive is to **PRODUCE** the artifact as explicitly
+          described.', '*   For each `[DELIVERABLE]` goal:', '*   **Instruction Interpretation:** You will interpret the goal''s
+          text (following the `[DELIVERABLE]` tag) as a **direct and non-negotiable instruction** to generate a specific output
+          artifact.', '*   *If the instruction details a table (e.g., "Create a Detailed Comparison Table in Markdown format"),
+          your output for this step **MUST** be a properly formatted Markdown table utilizing columns and rows as implied
+          by the instruction and the prepared data.*', '*   *If the instruction states to prepare a summary, report, or any
+          other structured output, your output for this step **MUST** be that precise artifact.*', '*   **Data Consolidation:**
+          Access and utilize **ONLY** the summaries generated during Phase 1 (`[RESEARCH]` tasks`) to fulfill the requirements
+          of the current `[DELIVERABLE]` goal. You **MUST NOT** perform new searches.', '*   **Output Generation:** Based
+          on the specific instruction of the `[DELIVERABLE]` goal:', '*   Carefully extract, organize, and synthesize the
+          relevant information from your previously gathered summaries.', '*   Must always produce the specified output artifact
+          (e.g., a concise summary, a structured comparison table, a comprehensive report, a visual representation, etc.)
+          with accuracy and completeness.', '*   **Output Accumulation:** Maintain and accumulate **all** the generated `[DELIVERABLE]`
+          artifacts. These are your final outputs.', '---', '**Final Output:** Your final output will comprise the complete
+          set of processed summaries from `[RESEARCH]` tasks AND all the generated artifacts from `[DELIVERABLE]` tasks, presented
+          clearly and distinctly.']
+      output_key: section_research_findings
+      after_agent_callback: collect_research_sources_callback
+
+models:
+  gemini-2.5-flash:
+    type: default
+    agents: [root_agent.0, root_agent.1, root_agent.2, root_agent.3, root_agent.4, plan_generator, section_planner, section_researcher,
+      enhanced_search_executor, interactive_research_planner_agent, root_agent.5, root_agent.6, root_agent.7, root_agent.8,
+      root_agent.9, agent.IdeationAgent, agent.ComparativeInsightAgent, agent.QAAgent, agent.VeoAgent, agent.PitchWriterAgent,
+      agent.EscalationChecker, escalation_checker, agent.CanvaAgent, agent.ImagenAgent, agent.PublisherAgent, agent.PromptForgeAgent]
+  gemini-2.5-pro:
+    type: literal
+    agents: [research_evaluator, report_composer]
+
+tools:
+  agent_tool:
+    type: agent
+    agents: [interactive_research_planner_agent]
+    params:
+      wrapper: AgentTool
+  deep_research_agent:
+    type: agent
+    agents: [root_agent.8]
+    params:
+      wrapper: AgentTool
+      agent: deep_research_agent
+  google_search:
+    type: module
+    agents: [plan_generator, section_researcher, enhanced_search_executor]
+
+teams:
+  interactive_research_planner_agent:
+    type: hierarchy
+    agents: [interactive_research_planner_agent, research_pipeline]
+  research_pipeline:
+    type: sequential
+    agents: [research_pipeline, section_planner, section_researcher, iterative_refinement_loop, report_composer]
+
+imports:
+  Agent: google.adk.Agent
+  AgentTool: google.adk.tools.agent_tool.AgentTool
+  Any: typing.Any
+  AssetPathManager: app.utils.config.AssetPathManager
+  AsyncGenerator: collections.abc.AsyncGenerator
+  asyncio: asyncio
+  auth: google.auth
+  BaseAgent: app.core.base_agent.BaseAgent
+  BaseModel: pydantic.BaseModel
+  BenchmarkCompany: app.core.schemas.BenchmarkCompany
+  BuiltInPlanner: google.adk.planners.BuiltInPlanner
+  CallbackContext: google.adk.agents.callback_context.CallbackContext
+  CanvaAgent: agent.CanvaAgent
+  CanvaOutput: app.core.schemas.CanvaOutput
+  CanvaPage: app.core.schemas.CanvaPage
+  ComparativeInsightAgent: agent.ComparativeInsightAgent
+  ComparativeInsightOutput: app.core.schemas.ComparativeInsightOutput
+  config: config.config
+  datetime: datetime
+  deep_research_agent: agents.deep_research.root_agent
+  Dict: typing.Dict
+  Event: google.adk.events.Event
+  EventActions: google.adk.events.EventActions
+  Field: pydantic.Field
+  genai_types: google.genai.types
+  GeneratedImage: app.core.schemas.GeneratedImage
+  GeneratedVideo: app.core.schemas.GeneratedVideo
+  google_search: google.adk.tools.google_search
+  GoogleCloudStorageClient: app.utils.google_clients.GoogleCloudStorageClient
+  ICP: app.core.schemas.ICP
+  IdeationAgent: agent.IdeationAgent
+  IdeationOutput: app.core.schemas.IdeationOutput
+  ImagenAgent: agent.ImagenAgent
+  ImagenOutput: app.core.schemas.ImagenOutput
+  InvocationContext: google.adk.agents.invocation_context.InvocationContext
+  json: json
+  List: typing.List
+  Literal: typing.Literal
+  LlmAgent: google.adk.agents.LlmAgent
+  logging: logging
+  LoopAgent: google.adk.agents.LoopAgent
+  ManifestAsset: app.core.schemas.ManifestAsset
+  model_validator: pydantic.model_validator
+  Optional: typing.Optional
+  os: os
+  Path: pathlib.Path
+  PILImage: PIL.Image
+  PipelineState: app.core.schemas.PipelineState
+  PitchNarrativeOutput: app.core.schemas.PitchNarrativeOutput
+  PitchWriterAgent: agent.PitchWriterAgent
+  PromptForgeAgent: agent.PromptForgeAgent
+  PromptForgeOutput: app.core.schemas.PromptForgeOutput
+  PromptSpec: app.core.schemas.PromptSpec
+  PublisherAgent: agent.PublisherAgent
+  PublishOutput: app.core.schemas.PublishOutput
+  QAAgent: agent.QAAgent
+  QAReport: app.core.schemas.QAReport
+  re: re
+  RealCanvaConnectClient: app.utils.real_api_clients.RealCanvaConnectClient
+  RealImagenClient: app.utils.real_api_clients.RealImagenClient
+  RealVeoClient: app.utils.real_api_clients.RealVeoClient
+  root_agent: agent.root_agent
+  SequentialAgent: google.adk.agents.SequentialAgent
+  SlideContent: app.core.schemas.SlideContent
+  StartupIdeaInput: app.core.schemas.StartupIdeaInput
+  time: time
+  Type: typing.Type
+  uuid: uuid
+  VeoAgent: agent.VeoAgent
+  VeoOutput: app.core.schemas.VeoOutput
+
+functions:
+  __init__:
+    type: sync
+    module: src.agent_root.forge.agents.prompt_forge_agent.agent
+    args: [self, max_refinement_cycles]
+  _async_sleep:
+    type: async
+    module: src.agent_root.forge.agents.imagen_agent.agent
+    args: [self, seconds]
+  _run_async_impl:
+    type: async
+    module: src.agent_root.forge.agents.deep_research.agent
+    args: [self, ctx]
+    params:
+      returns: AsyncGenerator
+  _upload_canva_assets:
+    type: async
+    module: src.agent_root.forge.agents.publisher_agent.agent
+    args: [self, canva_output, manifest_id]
+    params:
+      returns: List[ManifestAsset]
+  _upload_imagen_assets:
+    type: async
+    module: src.agent_root.forge.agents.publisher_agent.agent
+    args: [self, imagen_output, manifest_id]
+    params:
+      returns: List[ManifestAsset]
+  _upload_veo_assets:
+    type: async
+    module: src.agent_root.forge.agents.publisher_agent.agent
+    args: [self, veo_output, manifest_id]
+    params:
+      returns: List[ManifestAsset]
+  _validate_canva_output:
+    type: async
+    module: src.agent_root.forge.agents.qa_agent.agent
+    args: [self, canva_output]
+    params:
+      returns: Dict
+  _validate_imagen_output:
+    type: async
+    module: src.agent_root.forge.agents.qa_agent.agent
+    args: [self, imagen_output]
+    params:
+      returns: Dict
+  _validate_veo_output:
+    type: async
+    module: src.agent_root.forge.agents.qa_agent.agent
+    args: [self, veo_output]
+    params:
+      returns: Dict
+  citation_replacement_callback:
+    type: sync
+    module: src.agent_root.forge.agents.deep_research.agent
+    args: [callback_context]
+    params:
+      returns: genai_types.Content
+  collect_research_sources_callback:
+    type: sync
+    module: src.agent_root.forge.agents.deep_research.agent
+    args: [callback_context]
+    params:
+      returns: None
+  input_schema:
+    type: sync
+    module: src.agent_root.forge.agents.prompt_forge_agent.agent
+    args: [self]
+    params:
+      returns: Type[BaseModel]
+  load_prompts_from_disk:
+    type: sync
+    module: src.agent_root.forge.config
+    args: [cls, data]
+    params:
+      returns: dict
+  output_schema:
+    type: sync
+    module: src.agent_root.forge.agents.prompt_forge_agent.agent
+    args: [self]
+    params:
+      returns: Type[BaseModel]
+  run:
+    type: async
+    module: src.agent_root.forge.agents.prompt_forge_agent.agent
+    args: [self, input_data]
+    params:
+      returns: PromptForgeOutput
+  tag_replacer:
+    type: sync
+    module: src.agent_root.forge.agents.deep_research.agent
+    args: [match]
+    params:
+      returns: str
+
+variables:
+  LUNA_PROMPTS_PATH:
+    type: env
+    params:
+      caller: [os.environ.get]
+      path: [src.agent_root.forge.config]
+
+files:
+  ./:
+    type: pattern
+    actions: [read]
+    params:
+      patterns: ['*.md']
+      caller: [load_prompts_from_disk]
+  ./prompts/luna:
+    type: variable
+    actions: [read]
+    params:
+      caller: [Path]
+  image.local_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [Path]
+  image_path:
+    type: literal
+    actions: [read, write]
+    params:
+      caller: [Path(image.local_path), PILImage.open, image_path.write_bytes]
+  md_file:
+    type: variable
+    actions: [read]
+    params:
+      caller: [md_file.read_text]
+  persona.md:
+    type: literal
+    actions: [read]
+    params:
+      caller: [load_prompts_from_disk]
+      path: [prompts_dir]
+  persona_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [persona_path.read_text]
+  prompts_dir:
+    type: literal
+    actions: [read]
+    params:
+      caller: [Path('./prompts/luna'), prompts_dir.glob]
+  reconstructed_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: ['AssetPathManager.get_image_path(image_id=image.image_id, slide_number=image.slide_number, iteration=0)']
+  video.local_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [os.path.exists, open]
+  video_path:
+    type: variable
+    actions: [read, write]
+    params:
+      caller: [AssetPathManager.get_video_path(iteration=0), video_path.write_bytes]
+
+networks:
+  storage.googleapis.com:
+    type: api
+    actions: [GET]
+    urls: ['/{...}']
+    protocols: [https]
+    ports: ["443"]
+    params:
+      pattern: https://storage.googleapis.com/gtmforge-assets/{manifest_path}
+      caller: [run]
